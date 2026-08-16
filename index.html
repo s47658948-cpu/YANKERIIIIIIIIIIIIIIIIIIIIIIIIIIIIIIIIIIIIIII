@@ -474,7 +474,8 @@ async function yankerApi(action, method="GET", body=null){
     headers:{
       "Accept":"application/json",
       "Content-Type":"application/json",
-      "Cache-Control":"no-cache"
+      "Cache-Control":"no-cache",
+      ...(localStorage.getItem("yanker_member_admin_token") ? {"Authorization":"Bearer "+localStorage.getItem("yanker_member_admin_token")} : {})
     },
     body:body !== null ? JSON.stringify(body) : undefined
   });
@@ -1058,7 +1059,7 @@ async function handleJoinSubmit(e){
 
   try{
     const result = await yankerApi("request","POST",{
-      name: STATE.user.displayName,
+      name: STATE.user.displayName || STATE.user.name || STATE.user.username,
       username: STATE.user.username,
       discord,
       cityAge,

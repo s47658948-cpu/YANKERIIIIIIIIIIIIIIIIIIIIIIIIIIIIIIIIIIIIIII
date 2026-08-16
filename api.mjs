@@ -200,12 +200,19 @@ export async function handler(event) {
     }
 
     if (event.httpMethod === "POST" && action === "request") {
-      const name = String(body.name || "").trim();
+      let name = String(body.name || "").trim();
       const username = normalizeUsername(body.username);
       const discord = String(body.discord || "").trim();
       const passwordHash = String(body.passwordHash || "").trim();
       const reason = String(body.reason || "").trim();
-      if (!name || !username || !discord) return reply(400, { ok: false, error: "اطلاعات ضروری کامل نیست." });
+
+      // نام کاربر را اگر فرانت‌اند نفرستاد، از حساب ثبت‌شده بازیابی کن.
+      // این باعث می‌شود درخواست عضویت به‌خاطر displayName خالی بی‌دلیل رد نشود.
+      if (!username || !discord) return reply(400, { ok: false, error: "آیدی دیسکورد و نام کاربری الزامی است." });
+      if (!name) {
+        const profile = await db(`site_users?username=eq.${encodeURIComponent(username)}&select=display_name&limit=1`);
+        name = String(profile?.[0]?.display_name || username).trim() || username;
+      }
 
       const members = await db(`members?select=id,username&username=eq.${encodeURIComponent(username)}&limit=1`);
       if (members?.length) return reply(409, { ok: false, error: "این کاربر قبلاً عضو رسمی است." });
