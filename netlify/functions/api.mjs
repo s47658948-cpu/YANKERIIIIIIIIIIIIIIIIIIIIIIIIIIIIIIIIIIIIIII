@@ -437,8 +437,8 @@ export async function handler(event) {
       return reply(403, { ok: false, error: "این بخش فقط برای Owner در دسترس است." });
     }
 
-    if (isMemberAdminToken(event) && Number(getTokenPayload(event)?.rank||0)===10 && !["penalties","penalty-create","penalty-delete","penalty-paid"].includes(action)) {
-      return reply(403,{ok:false,error:"رنک 10 فقط به بخش جریمه‌ها دسترسی دارد."});
+    if (isMemberAdminToken(event) && Number(getTokenPayload(event)?.rank||0)===10 && !["penalties","penalty-create","penalty-delete","members"].includes(action)) {
+      return reply(403,{ok:false,error:"رنک 10 فقط به پنل جریمه‌ها دسترسی دارد."});
     }
 
     if (event.httpMethod === "GET" && action === "requests") return reply(200, { ok: true, requests: await getRequestsFor() });
@@ -577,7 +577,7 @@ export async function handler(event) {
 
     if (event.httpMethod === "GET" && action === "penalties") {
       const actor=getAdminActor(event);
-      if(!actor || (!actor.isOwner && Number(actor.rank)<10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 به بالا است."});
+      if(!actor || (!actor.isOwner && Number(actor.rank)!==10 && Number(actor.rank)<12)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 و 12 به بالا است."});
       const rows=await db("penalties?select=*&order=created_at.desc");
       return reply(200,{ok:true,penalties:(rows||[]).map(p=>({id:p.id,username:p.username||"",name:p.name||"",reason:p.reason||"",amount:Number(p.amount||0),createdAt:Number(p.created_at||0),issuedBy:p.issued_by||"",paid:!!p.paid,paidAt:p.paid_at?Number(p.paid_at):null}))});
     }
