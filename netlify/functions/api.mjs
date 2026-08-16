@@ -238,7 +238,7 @@ export async function handler(event) {
       const members = await db(`members?username=eq.${encodeURIComponent(username)}&limit=1`);
       const penalties = await db(`penalties?username=eq.${encodeURIComponent(username)}&order=created_at.desc`) || [];
       const messages = await getMemberMessages(username);
-      return reply(200, { ok: true, requests, member: mapMember(members?.[0] || null, false), messages, penalties: penalties.map(p => ({ id:p.id, username:p.username||username, name:p.name||username, reason:p.reason||"", amount:Number(p.amount||0), issuedBy:p.issued_by||ADMIN_USER, paymentNotice:p.payment_notice||`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.`, createdAt:Number(p.created_at||0), paid:!!p.paid, paidAt:p.paid_at ? Number(p.paid_at) : null })) });
+      return reply(200, { ok: true, requests, member: mapMember(members?.[0] || null, false), messages, penalties: penalties.map(p => ({ id:p.id, username:p.username||username, name:p.name||username, reason:p.reason||"", amount:Number(p.amount||0), issuedBy:p.issued_by||ADMIN_USER, paymentNotice:p.payment_notice||`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.`, createdAt:Number(p.created_at||0), paid:!!p.paid, paymentStatus:p.payment_status || (p.paid ? "paid" : "unpaid"), paymentSubmittedAt:p.payment_submitted_at ? Number(p.payment_submitted_at) : null, paidAt:p.paid_at ? Number(p.paid_at) : null })) });
     }
 
     if (event.httpMethod === "POST" && action === "member-login") {
@@ -451,7 +451,7 @@ export async function handler(event) {
       return reply(200,{ok:true,penalty:out?.[0]||{...rows[0],payment_status:'pending',payment_submitted_at:submittedAt}});
     }
 
-    if (!checkToken(event)) return reply(401, { ok: false, error: "دسترسی پنل اعضا لازم است." });
+    if (!getAdminActor(event)) return reply(401, { ok: false, error: "دسترسی پنل اعضا لازم است." });
 
     // Rank 10+ members get a separate, passwordless admin panel.
     // Their scope is intentionally limited to tickets, membership approval/deletion,

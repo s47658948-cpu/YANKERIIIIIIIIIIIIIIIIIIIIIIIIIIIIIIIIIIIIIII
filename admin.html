@@ -27,7 +27,6 @@ input,select{width:100%;padding:11px;margin-top:7px;border:1px solid #2b3d5e;bac
       <button class="admin-nav active" data-section="dashboard">⌂ <span>نمای کلی</span></button>
       <button class="admin-nav" data-section="requests">📥 <span>درخواست‌های عضویت</span></button>
       <button class="admin-nav" data-section="members">👥 <span>اعضای رسمی</span></button>
-      <button class="admin-nav" data-section="messages">💬 <span>پیام به اعضا</span></button>
       <button class="admin-nav" data-section="community">◈ <span>اطلاعیه‌ها</span></button>
       <button class="admin-nav" data-section="support">✦ <span>تیکت اعضا</span><i id="ticketNavBadge">0</i></button><button class="admin-nav" data-section="cafeSupport">☕ <span>تیکت کافه</span><i id="cafeTicketNavBadge">0</i></button><button class="admin-nav" data-section="penalties">⚠️ <span>جریمه‌ها</span><i id="penaltyNavBadge">0</i></button>
       <div class="admin-sidebar-spacer"></div>
@@ -44,11 +43,6 @@ input,select{width:100%;padding:11px;margin-top:7px;border:1px solid #2b3d5e;bac
           <button class="quick-card" data-jump="community"><strong>اطلاعیه‌ها</strong><span>انتشار و مدیریت اطلاعیه‌های جدید</span><b>→</b></button>
           <button class="quick-card" data-jump="support"><strong>مرکز تیکت</strong><span>پاسخ‌گویی و ارسال پیام مستقیم</span><b>→</b></button>
         </div>
-      </section>
-      <section class="admin-section" data-section-panel="messages">
-        <div class="section-title-row"><div><div class="eyebrow">MEMBER MESSAGES</div><h2>💬 ارسال پیام به عضو</h2><p>پیام مستقیماً داخل پنل و پروفایل همان عضو نمایش داده می‌شود و تیکت جدیدی ایجاد نمی‌کند.</p></div></div>
-        <div class="support-compose admin-card"><div class="card-head"><div><h3>پیام جدید</h3><span>پیام از طرف مدیریت ارسال می‌شود.</span></div><span class="compose-mark">💬</span></div><div class="admin-ticket-form"><label>عضو<select id="messageMember"></select></label><label class="full">متن پیام<textarea id="memberMessageBody" maxlength="5000" placeholder="متن پیام برای عضو..."></textarea></label><button id="sendMemberMessage" type="button" class="btn primary">ارسال پیام</button></div></div>
-        <div class="admin-card"><div class="card-head"><div><h3>راهنما</h3><span>پیام‌ها داخل تیکت ارسال نمی‌شوند.</span></div></div><div class="notice">📩 عضو بعد از ورود یا بروزرسانی پروفایل، پیام را در بخش «پیام‌های مدیریت» می‌بیند.</div></div>
       </section>
       <section class="admin-section" data-section-panel="requests">
         <div class="section-title-row"><div><div class="eyebrow">MEMBERSHIP REQUESTS</div><h2>درخواست‌های عضویت</h2><p>بررسی سریع، بدون شلوغی.</p></div></div>
@@ -277,15 +271,6 @@ async function replyTicket(id){ const message=prompt("پاسخ مدیریت:"); 
 async function closeTicket(id){ try{await api("ticket-close","POST",{id});await load();}catch(e){alert(e.message);} }
 async function deleteTicket(id){ if(!confirm("این تیکت و تمام پیام‌های آن برای همیشه حذف شود؟"))return; try{await api("ticket-delete","POST",{id});await load();}catch(e){alert(e.message);} }
 
-async function sendMemberMessage(){
-  const username=$("messageMember").value;
-  const message=$("memberMessageBody").value.trim();
-  if(!username||!message){ alert("عضو و متن پیام را کامل کنید."); return; }
-  const btn=$("sendMemberMessage"); btn.disabled=true; btn.textContent="در حال ارسال...";
-  try{ await api("member-message-create","POST",{username,message}); $("memberMessageBody").value=""; alert("پیام با موفقیت برای عضو ارسال شد."); await load(); }
-  catch(e){ alert(e.message); }
-  finally{ btn.disabled=false; btn.textContent="ارسال پیام"; }
-}
 
 async function sendMemberTicket(){
   const username=$("ticketMember").value;
