@@ -1,0 +1,25 @@
+YANKER FINAL NETLIFY SETUP
+
+1) Deploy this whole folder/ZIP to Netlify.
+2) Keep netlify.toml in the ROOT of the deployed project.
+3) Required Netlify Environment Variables:
+   SUPABASE_URL = https://YOUR_PROJECT.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY = YOUR_SUPABASE_SERVICE_ROLE_KEY
+   ADMIN_USER = owner
+   ADMIN_PASSWORD = Yanker@Admin#2026
+   SESSION_SECRET = choose-a-long-random-secret
+
+4) In Supabase SQL Editor, run:
+   yanker_final_migration.sql
+
+5) Admin login:
+   /admin
+   username: owner
+   password: Yanker@Admin#2026
+
+IMPORTANT:
+- Do NOT put SUPABASE_SERVICE_ROLE_KEY in HTML or client-side JavaScript.
+- The /admin route is protected by the login page; the API still verifies the token.
+- Rank 10+: penalties panel.
+- Rank 11+: member tickets/management sections.
+- Rank 12+: cafe tickets.

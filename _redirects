@@ -1,0 +1,3 @@
+/admin /admin.html 200
+/admin/ /admin.html 200
+/api/* /.netlify/functions/api?action=:splat 200
