@@ -64,7 +64,7 @@ input,select{width:100%;padding:11px;margin-top:7px;border:1px solid #2b3d5e;bac
         <div class="ticket-filter"><button class="ticket-filter-btn active" data-ticket-filter="open">فعال <b id="openTicketCount">0</b></button><button class="ticket-filter-btn" data-ticket-filter="closed">بسته‌شده <b id="closedTicketCount">0</b></button><button class="ticket-filter-btn" data-ticket-filter="all">همه <b id="allTicketCount">0</b></button></div>
         <div id="tickets" class="ticket-admin-list"></div></div>
       </section>
-<section class="admin-section" data-section-panel="cafeSupport"><div class="section-title-row"><div><div class="eyebrow">CAFE SUPPORT</div><h2>☕ تیکت‌های کافه</h2><p>تیکت‌های کافه از تیکت اعضا جدا هستند.</p></div></div><div class="admin-card"><div id="cafeTickets" class="ticket-admin-list"></div></div></section><section class="admin-section" data-section-panel="penalties"><div class="section-title-row"><div><div class="eyebrow">PENALTIES</div><h2>⚠️ پنل جریمه‌ها</h2><p>ثبت و مدیریت جریمه اعضای تأییدشده.</p></div></div><div class="admin-card"><div class="admin-ticket-form"><label>عضو<select id="penaltyMember"></select></label><label>مبلغ<input id="penaltyAmount" type="number" min="0" placeholder="مبلغ"></label><label style="grid-column:1/-1">دلیل جریمه<textarea id="penaltyReason" maxlength="1000" placeholder="دلیل جریمه..."></textarea></label><button id="createPenalty" class="btn danger" type="button">ثبت جریمه</button></div></div><div class="admin-card"><div id="penalties" class="table"></div></div><div class="admin-card" style="margin-top:18px"><div class="card-head"><div><h3>💳 جریمه‌های پرداخت‌شده</h3><span>جریمه‌هایی که مدیریت تأیید کرده است.</span></div></div><div id="paidPenalties" class="table"></div></div></section>
+<section class="admin-section" data-section-panel="cafeSupport"><div class="section-title-row"><div><div class="eyebrow">CAFE SUPPORT</div><h2>☕ تیکت‌های کافه</h2><p>تیکت‌های کافه از تیکت اعضا جدا هستند.</p></div></div><div class="admin-card"><div id="cafeTickets" class="ticket-admin-list"></div></div></section><section class="admin-section" data-section-panel="penalties"><div class="section-title-row"><div><div class="eyebrow">PENALTIES</div><h2>⚠️ پنل جریمه‌ها</h2><p>ثبت و مدیریت جریمه اعضای تأییدشده.</p></div></div><div class="admin-card"><div class="admin-ticket-form"><label>عضو<select id="penaltyMember"></select></label><label>مبلغ<input id="penaltyAmount" type="number" min="0" placeholder="مبلغ"></label><label style="grid-column:1/-1">دلیل جریمه<textarea id="penaltyReason" maxlength="1000" placeholder="دلیل جریمه..."></textarea></label><button id="createPenalty" class="btn danger" type="button">ثبت جریمه</button></div></div><div class="admin-card"><div id="penalties" class="table"></div></div></section>
     </main>
   </div>
 </div>
@@ -113,11 +113,7 @@ async function api(action, method="GET", body=null){
   return data;
 }
 
-function tokenIsOwner(){
-  try{const raw=token.split(".")[0]; if(!raw)return false; const p=JSON.parse(atob(raw.replace(/-/g,"+").replace(/_/g,"/"))); return p.role==="owner" && Number(p.exp)>Date.now();}catch(e){return false;}
-}
 function showPanel(){
-  if(!tokenIsOwner()){ showLogin(); message("این پنل فقط برای Owner است. رنک 11 به بالا باید از پنل مدیریت اعضا استفاده کنند.",true); return; }
   $("login").classList.add("hidden");
   $("panel").classList.remove("hidden");
 }
@@ -132,7 +128,6 @@ function message(text,error=true){
 }
 
 async function load(){
-  if(!tokenIsOwner()){ showLogin(); message("این پنل فقط برای Owner است. رنک 11 به بالا باید از پنل مدیریت اعضا استفاده کنند.",true); return; }
   try{
     const [s,r,m,a,t,p]=await Promise.all([
       api("stats"),api("requests"),api("members"),api("announcements"),api("tickets-admin"),api("penalties")
@@ -189,15 +184,11 @@ async function load(){
      $("cafeTickets").innerHTML=cafeTickets.length?cafeTickets.map(renderTicket).join(''):'<div class="notice">تیکت کافه‌ای وجود ندارد.</div>';
      if($("penaltyMember")) $("penaltyMember").innerHTML=(m.members||[]).map(x=>`<option value="${esc(x.username)}">${esc(x.name)} — @${esc(x.username)}</option>`).join('')||'<option value="">عضوی وجود ندارد</option>';
      const penalties=p?.penalties||[];
-     const activePenalties=penalties.filter(x=>x.paymentStatus!=="paid" && !x.paid);
-     const paidPenalties=penalties.filter(x=>x.paymentStatus==="paid" || x.paid);
-     $("penalties").innerHTML=activePenalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>${activePenalties.map(x=>`<tr><td>${esc(x.name)} · @${esc(x.username)}</td><td>${esc(x.reason)}</td><td>${esc(x.amount)}</td><td>${esc(x.issuedBy||"owner")}</td><td>${x.paymentStatus==='pending'?'<span class="badge pending">در انتظار تأیید</span>':'<span class="badge pending">پرداخت نشده</span>'}</td><td>${x.paymentStatus==='pending'?`<button class="btn success penalty-approve" data-id="${esc(x.id)}">✓ تأیید پرداخت</button> `:''}<button class="btn danger penalty-delete" data-id="${esc(x.id)}">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="notice">جریمه فعال وجود ندارد.</div>';
-     $("paidPenalties").innerHTML=paidPenalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>تأیید در</th></tr></thead><tbody>${paidPenalties.map(x=>`<tr><td>${esc(x.name)} · @${esc(x.username)}</td><td>${esc(x.reason)}</td><td>${esc(x.amount)}</td><td>${esc(x.issuedBy||"owner")}</td><td>${x.paidAt?new Date(x.paidAt).toLocaleString("fa-IR"):"-"}</td></tr>`).join('')}</tbody></table>`:'<div class="notice">جریمه پرداخت‌شده‌ای وجود ندارد.</div>';
+     $("penalties").innerHTML=penalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>عملیات</th></tr></thead><tbody>${penalties.map(x=>`<tr><td>${esc(x.name)} · @${esc(x.username)}</td><td>${esc(x.reason)}</td><td>${esc(x.amount)}</td><td>${esc(x.issuedBy)}</td><td><button class="btn danger penalty-delete" data-id="${esc(x.id)}">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="notice">جریمه‌ای ثبت نشده است.</div>';
      if($("cafeTicketNavBadge")) $("cafeTicketNavBadge").textContent=cafeTickets.filter(x=>x.status!=="closed").length;
      if($("penaltyNavBadge")) $("penaltyNavBadge").textContent=penalties.length;
      if($("openTicketCount")) $("openTicketCount").textContent=openTickets.length;
     if($("closedTicketCount")) $("closedTicketCount").textContent=closedTickets.length;
-    if($("allTicketCount")) $("allTicketCount").textContent=memberTickets.length;
     if($("ticketNavBadge")) $("ticketNavBadge").textContent=openTickets.length;
     document.querySelectorAll(".ticket-reply").forEach(b=>b.onclick=()=>replyTicket(b.dataset.id));
     document.querySelectorAll(".ticket-close").forEach(b=>b.onclick=()=>closeTicket(b.dataset.id));
@@ -274,7 +265,7 @@ async function del(id){
 
 async function deleteAnnouncement(id){ if(!confirm("این اطلاعیه حذف شود؟"))return; try{await api("announcement-delete","POST",{id}); await load();}catch(e){alert(e.message);} }
 async function saveAnnouncement(){ const title=$("annTitle").value.trim(), body=$("annBody").value.trim(); if(!title||!body)return; try{await api("announcement-create","POST",{title,body}); $("annTitle").value="";$("annBody").value="";$("announcementForm").classList.add("hidden");await load();}catch(e){alert(e.message);} }
-async function replyTicket(id){ const message=prompt("پاسخ مدیریت:"); if(!message||!message.trim())return; try{ const result=await api("ticket-reply","POST",{id,message:message.trim()}); if(!result?.ok) throw new Error(result?.error||"ارسال پاسخ ناموفق بود."); await load(); }catch(e){alert(e.message||"ارسال پاسخ انجام نشد.");} }
+async function replyTicket(id){ const message=prompt("پاسخ مدیریت:"); if(!message||!message.trim())return; try{await api("ticket-reply","POST",{id,message:message.trim()});await load();}catch(e){alert(e.message);} }
 async function closeTicket(id){ try{await api("ticket-close","POST",{id});await load();}catch(e){alert(e.message);} }
 async function deleteTicket(id){ if(!confirm("این تیکت و تمام پیام‌های آن برای همیشه حذف شود؟"))return; try{await api("ticket-delete","POST",{id});await load();}catch(e){alert(e.message);} }
 
@@ -306,7 +297,6 @@ document.addEventListener("DOMContentLoaded",function(){
   $("saveAnnouncement")?.addEventListener("click",saveAnnouncement);
   $("sendMemberTicket")?.addEventListener("click",sendMemberTicket); $("createPenalty")?.addEventListener("click",async()=>{const username=$("penaltyMember").value,reason=$("penaltyReason").value.trim(),amount=Number($("penaltyAmount").value)||0;if(!username||!reason)return alert("عضو و دلیل جریمه را کامل کنید.");try{await api("penalty-create","POST",{username,reason,amount});$("penaltyReason").value="";$("penaltyAmount").value="";await load()}catch(e){alert(e.message)}});
   document.querySelectorAll(".ticket-filter-btn").forEach(b=>b.addEventListener("click",()=>{ticketFilter=b.dataset.ticketFilter;load();}));
-    document.querySelectorAll(".penalty-approve").forEach(b=>b.onclick=async()=>{if(!confirm("این پرداخت تأیید شود؟"))return;try{await api("penalty-approve","POST",{id:b.dataset.id});await load()}catch(e){alert(e.message)}});
 
   if(token) load();
   else showLogin();
