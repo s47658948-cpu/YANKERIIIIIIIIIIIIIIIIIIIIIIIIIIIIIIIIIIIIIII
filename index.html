@@ -743,7 +743,7 @@ async function refreshMyStatus(){
     const oldStatus = JSON.stringify(STATE.requests);
     const oldRank = STATE.members.find(x=>x.username===STATE.user.username)?.rank || null;
     STATE.requests = nextRequests;
-    STATE.penalties = (r.penalties||[]).map(p=>({id:p.id,username:p.username,name:p.name,reason:p.reason,amount:Number(p.amount||0),issuedBy:p.issuedBy||"",createdAt:Number(p.createdAt||0),paid:!!p.paid,paidAt:p.paidAt||null}));
+    STATE.penalties = (r.penalties||[]).map(p=>({id:p.id,username:p.username,name:p.name,reason:p.reason,amount:Number(p.amount||0),issuedBy:p.issuedBy||"",createdAt:p.createdAt||0,paid:!!p.paid,paidAt:p.paidAt||null,paymentStatus:p.paymentStatus|| (p.paid?"approved":"unpaid"),paymentNotice:p.paymentNotice||""}));
 
     if(r.member){
       const m=mapClientMember(r.member);
@@ -1047,7 +1047,6 @@ async function handleJoinSubmit(e){
   const cityAge = Number(f.cityAge.value);
   const realAge = Number(f.realAge.value);
   const playtime = Number(f.playtime.value);
-  const reason = f.reason.value.trim();
   const discord = f.discord.value.trim();
   const agree = f.agree.checked;
 
@@ -1055,7 +1054,6 @@ async function handleJoinSubmit(e){
   if(!cityAge || cityAge<7){ STATE.joinError="سن شهری باید حداقل ۷ سال باشد."; render(); return; }
   if(!realAge || realAge<14){ STATE.joinError="سن واقعی باید حداقل ۱۴ سال باشد."; render(); return; }
   if(!playtime || playtime<0){ STATE.joinError="ساعت بازی هفتگی را وارد کنید."; render(); return; }
-  if(reason.length<15){ STATE.joinError="لطفاً دلیل عضویت را کامل‌تر بنویسید (حداقل ۱۵ کاراکتر)."; render(); return; }
   if(!agree){ STATE.joinError="برای ادامه باید قوانین را مطالعه و تأیید کنید."; render(); return; }
 
   try{
@@ -1066,7 +1064,7 @@ async function handleJoinSubmit(e){
       cityAge,
       realAge,
       playtime,
-      reason,
+      reason: "",
       passwordHash: STATE.user.passwordHash || ""
     });
 
@@ -1222,7 +1220,7 @@ function navBar(){
       </div>
       <div class="nav-cta">
         ${STATE.user
-          ? `<button class="btn btn-sm" onclick="nav('profile')">👤 ${esc(STATE.user.displayName)}</button>
+          ? `<button class="btn btn-sm" onclick="nav('profile')">👤 ${esc(STATE.user.displayName)}${STATE.penalties?.some(p=>!p.paid)?` <span class="ticket-unread-badge" style="min-width:18px;height:18px;font-size:10px;">!</span>`:''}</button>
              ${canManageByRank() ? `<button class="btn btn-sm btn-ghost" onclick="openEmbeddedAdmin()">🛡️ پنل مدیریت</button>` : ""}
              <button class="btn btn-sm btn-ghost" onclick="handleLogout()">خروج</button>`
           : `
@@ -1530,8 +1528,7 @@ function viewJoin(){
           <div class="field"><label>سن واقعی (حداقل ۱۴)</label><input name="realAge" type="number" min="0" required/></div>
         </div>
         <div class="field"><label>ساعت بازی هفتگی (Play Time)</label><input name="playtime" type="number" min="0" required/></div>
-        <div class="field"><label>چرا می‌خواهید عضو Yanker شوید؟</label><textarea name="reason" placeholder="درباره‌ی خودتان و انگیزه‌تان بنویسید..." required></textarea></div>
-        <label class="check-row"><input type="checkbox" name="agree" required/> <span>قوانین Yanker را مطالعه کرده‌ام و متعهد به رعایت کامل آن‌ها هستم.</span></label>
+                <label class="check-row"><input type="checkbox" name="agree" required/> <span>قوانین Yanker را مطالعه کرده‌ام و متعهد به رعایت کامل آن‌ها هستم.</span></label>
         <button class="btn btn-primary btn-block" type="submit">ارسال درخواست عضویت</button>
       </form>
     </div>
@@ -1578,12 +1575,13 @@ function viewRegister(){
 
 async function markPenaltyPaid(id){
   if(!STATE.user?.username) return;
+  if(!confirm("بعد از واریز واقعی، درخواست بررسی پرداخت برای مدیریت ارسال شود؟")) return;
   try{
     await yankerApi("penalty-paid","POST",{id,username:STATE.user.username});
     await refreshMyStatus();
     STATE.route="profile";
     render();
-  }catch(e){ alert(e.message||"ثبت وضعیت پرداخت انجام نشد."); }
+  }catch(e){ alert(e.message||"ثبت درخواست پرداخت انجام نشد."); }
 }
 
 function viewProfile(){
@@ -1610,14 +1608,21 @@ function viewProfile(){
 
       ${isMember && STATE.penalties.length ? `<div class="card" style="margin-bottom:22px;border:1px solid rgba(255,96,127,.45);background:linear-gradient(135deg,rgba(255,96,127,.10),rgba(13,19,34,.88));">
         <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
-          <div><div class="section-eyebrow" style="color:#ff7890;">⚠️ هشدار جریمه</div><h3 style="margin:4px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">برای هر جریمه فقط وضعیت پرداخت را تأیید کنید.</p></div>
-          <span class="badge badge-pending">${STATE.penalties.filter(x=>!x.paid).length} پرداخت‌نشده</span>
+          <div><div class="section-eyebrow" style="color:#ff7890;">⚠️ هشدار جریمه</div><h3 style="margin:4px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">بعد از پرداخت، درخواست بررسی برای مدیریت ارسال می‌شود و فقط پس از تأیید مدیریت «پرداخت شد» ثبت می‌شود.</p></div>
+          <span class="badge badge-pending">${STATE.penalties.filter(x=>!x.paid).length} باز</span>
         </div>
-        <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.map(p=>`<div style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,10,22,.55);">
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>${esc(p.reason)}</strong><span>${esc(p.amount)} تومان</span></div>
-          <div class="panel-sub" style="margin:7px 0;">ثبت‌شده توسط ${esc(p.issuedBy||"مدیریت")}</div>
-          ${p.paid ? `<span class="badge badge-success">✓ پرداخت شد</span>` : `<button class="btn btn-primary btn-sm" onclick="markPenaltyPaid('${esc(p.id)}')">پرداخت شد</button>`}
-        </div>`).join('')}</div>
+        <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.map(p=>{
+          const status=p.paid?'approved':(p.paymentStatus==='pending_review'?'pending_review':'unpaid');
+          const statusHtml=status==='approved'?'<span class="badge badge-success">✓ پرداخت توسط مدیریت تأیید شد</span>':status==='pending_review'?'<span class="badge badge-pending">⏳ پرداخت در حال بررسی مدیریت</span>':'<span class="badge badge-pending">پرداخت نشده</span>';
+          const notice=p.paymentNotice||"شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496\n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.";
+          return `<div style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,10,22,.55);">
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>${esc(p.reason)}</strong><span>${esc(p.amount)} تومان</span></div>
+            <div class="panel-sub" style="margin:7px 0;">ثبت‌شده توسط ${esc(p.issuedBy||"مدیریت")}</div>
+            <div style="white-space:pre-line;margin:10px 0;padding:11px 12px;border-radius:11px;background:rgba(47,91,255,.08);border:1px solid rgba(122,162,255,.15);color:#cfd8f4;font-size:12px;line-height:1.9;">${esc(notice)}</div>
+            ${statusHtml}
+            ${status==='unpaid'?`<button class="btn btn-primary btn-sm" style="margin-right:8px;" onclick="markPenaltyPaid('${esc(p.id)}')">✓ پرداخت کردم / ارسال برای بررسی</button>`:''}
+          </div>`;
+        }).join('')}</div>
       </div>` : ''}
 
       <div class="section-head">
@@ -1850,7 +1855,7 @@ function adminRequests(){
 
           <td>
             <div class="request-reason-preview">
-              <b>چرا می‌خواهید عضو Yanker شوید؟</b>
+              
               ${esc((r.reason || "دلیلی ثبت نشده است.").length > 95
                 ? (r.reason || "").slice(0,95) + "…"
                 : (r.reason || "دلیلی ثبت نشده است."))}
@@ -1951,17 +1956,6 @@ function requestDetailModal(id){
         </div>
       </div>
 
-      <div class="request-detail-section">
-        <div class="request-detail-section-title"><span>💬</span> چرا می‌خواهید عضو Yanker شوید؟</div>
-        <div class="request-reason-box">${esc(r.reason || "متقاضی دلیلی ثبت نکرده است.")}</div>
-      </div>
-
-      ${r.reviewedBy ? `
-        <div class="hint" style="margin-top:14px;">
-          بررسی توسط <strong style="color:#fff;">${esc(r.reviewedBy)}</strong>
-          ${r.reviewedAt ? ` در ${fmtDate(r.reviewedAt)}` : ""}
-        </div>
-      ` : ""}
 
       ${r.status==="pending" ? `
         <div class="request-review-actions">
