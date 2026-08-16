@@ -15,7 +15,7 @@
 <section class="section" data-section="requests"><div class="card"><div class="head"><div><h2>درخواست‌های عضویت</h2><span class="muted">فقط تأیید درخواست در این پنل فعال است.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="requests" class="table"></div></div></section>
 <section class="section" data-section="members"><div class="card"><div class="head"><div><h2>اعضای رسمی</h2><span class="muted">اعضای رنک 11+ با قفل امنیتی نمایش داده می‌شوند.</span></div><div class="search"><input id="memberSearch" placeholder="جستجوی نام یا username..." oninput="renderMembers()"></div></div><div id="members" class="table"></div></div></section>
 <section class="section" data-section="tickets"><div class="card"><div class="head"><div><h2>مرکز تیکت</h2><span class="muted">تیکت‌های فعال و بسته‌شده با حفظ کامل سابقه.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div class="tabs"><button class="tab active" onclick="ticketKind='member';renderTickets()">تیکت اعضا</button><button class="tab" onclick="ticketKind='cafe';renderTickets()">☕ کافه</button><button class="tab active" data-ticket-tab="open">فعال <b id="openCount">0</b></button><button class="tab" data-ticket-tab="closed">بسته‌شده <b id="closedCount">0</b></button><button class="tab" data-ticket-tab="all">همه <b id="allCount">0</b></button></div><div id="tickets"></div></div><div class="card"><div class="head"><div><h3>ارسال تیکت برای عضو</h3><span class="muted">یک گفتگوی جدید مستقیماً برای عضو ایجاد کن.</span></div></div><div class="form"><label>عضو<select id="ticketMember"></select></label><label>موضوع<input id="ticketSubject" maxlength="120" placeholder="موضوع"></label><label class="full">پیام<textarea id="ticketBody" maxlength="3000" placeholder="متن پیام..."></textarea></label><button class="btn primary" id="sendTicket">ارسال تیکت</button></div></div></section>
-<section class="section" data-section="cafeTickets"><div class="card"><div class="head"><div><h2>☕ تیکت‌های کافه</h2><span class="muted">فقط Rank 12+ می‌تواند این تیکت‌ها را ببیند و پاسخ دهد.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="cafeTickets"></div></div></section><section class="section" data-section="penalties"><div class="card"><div class="head"><div><h2>⚠️ پنل جریمه‌ها</h2><span class="muted">دسترسی فقط برای Rank 10.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div class="form"><label>عضو<select id="penaltyMember"></select></label><label>مبلغ<input id="penaltyAmount" type="number" min="0" placeholder="مثلاً 5000"></label><label class="full">دلیل جریمه<textarea id="penaltyReason" maxlength="1000" placeholder="دلیل جریمه..."></textarea></label><button class="btn danger" id="createPenalty">ثبت جریمه</button></div><div id="penalties" class="table" style="margin-top:18px"></div></div></section>
+<section class="section" data-section="cafeTickets"><div class="card"><div class="head"><div><h2>☕ تیکت‌های کافه</h2><span class="muted">فقط Rank 12+ می‌تواند این تیکت‌ها را ببیند و پاسخ دهد.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="cafeTickets"></div></div></section><section class="section" data-section="penalties"><div class="card"><div class="head"><div><h2>⚠️ پنل جریمه‌ها</h2><span class="muted">دسترسی برای Rank 10 و Rank 12+ .</span></div><button class="btn ghost" onclick="load()">↻</button></div><div class="form"><label>عضو<select id="penaltyMember"></select></label><label>مبلغ<input id="penaltyAmount" type="number" min="0" placeholder="مثلاً 5000"></label><label class="full">دلیل جریمه<textarea id="penaltyReason" maxlength="1000" placeholder="دلیل جریمه..."></textarea></label><button class="btn danger" id="createPenalty">ثبت جریمه</button></div><div id="penalties" class="table" style="margin-top:18px"></div></div></section>
 </main></div></div>
 <script>
 'use strict';
@@ -33,11 +33,16 @@ function applyRankUI(){
     if(penaltyNav) penaltyNav.style.display='';
     if(penaltySection) penaltySection.style.display='';
     activate('penalties');
-  }else if(r>=11){
+  }else if(r>=12){
+    memberNavs.forEach(x=>x.style.display='');
+    if(penaltyNav) penaltyNav.style.display='';
+    if(penaltySection) penaltySection.style.display='';
+    if(document.querySelector('.section.active[data-section="penalties"]')) activate('members');
+  }else if(r===11){
     memberNavs.forEach(x=>x.style.display='');
     if(penaltyNav) penaltyNav.style.display='none';
     if(penaltySection) penaltySection.style.display='none';
-    if(document.querySelector('.section.active[data-section="penalties"]')) activate('members');
+    activate('members');
   }else{
     memberNavs.forEach(x=>x.style.display='none');
     if(penaltyNav) penaltyNav.style.display='none';
@@ -48,9 +53,10 @@ function activate(page){document.querySelectorAll('.nav[data-page]').forEach(x=>
 document.querySelectorAll('.nav[data-page]').forEach(x=>x.onclick=()=>activate(x.dataset.page));document.querySelectorAll('[data-ticket-tab]').forEach(x=>x.onclick=()=>{ticketTab=x.dataset.ticketTab;document.querySelectorAll('[data-ticket-tab]').forEach(b=>b.classList.toggle('active',b.dataset.ticketTab===ticketTab));renderTickets()});
 async function load(){
   const rnk=tokenRank();
+  const canPenalties=(rnk===10||rnk>=12);
   const calls=rnk===10
     ? [Promise.resolve({requests:[]}),api('members'),Promise.resolve({tickets:[]}),api('penalties')]
-    : [api('requests'),api('members'),api('tickets-admin'),Promise.resolve({penalties:[]})];
+    : [api('requests'),api('members'),api('tickets-admin'),canPenalties?api('penalties'):Promise.resolve({penalties:[]})];
   const results=await Promise.allSettled(calls);
   const [r,m,t,p]=results;
   DATA.requests=r.status==='fulfilled'?(r.value.requests||[]):[];
@@ -90,7 +96,7 @@ async function deleteTicket(id){if(!confirm('تیکت و تمام پیام‌ه�
 $('createPenalty').onclick=async()=>{const username=$('penaltyMember').value,reason=$('penaltyReason').value.trim(),amount=Number($('penaltyAmount').value)||0;if(!username||!reason)return alert('عضو و دلیل جریمه را کامل کنید.');try{await api('penalty-create','POST',{username,reason,amount});$('penaltyReason').value='';$('penaltyAmount').value='';await load()}catch(e){alert(e.message)}};
 function renderPenalties(){
   if(!$('penalties')) return;
-  $('penalties').innerHTML=DATA.penalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>عملیات</th></tr></thead><tbody>${DATA.penalties.map(p=>`<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)}</td><td>${esc(p.issuedBy)}</td><td><button class="btn danger" onclick="deletePenalty('${esc(p.id)}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">جریمه‌ای ثبت نشده است.</div>';
+  $('penalties').innerHTML=DATA.penalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>${DATA.penalties.map(p=>`<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)}</td><td>${esc(p.issuedBy)}</td><td>${p.paid?'<span class="badge answered">✓ پرداخت شد</span>':'<span class="badge pending">پرداخت نشده</span>'}</td><td><button class="btn danger" onclick="deletePenalty('${esc(p.id)}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">جریمه‌ای ثبت نشده است.</div>';
 }
 
 async function deletePenalty(id){if(!confirm('این جریمه حذف شود؟'))return;try{await api('penalty-delete','POST',{id});await load()}catch(e){alert(e.message)}}

@@ -51,6 +51,10 @@ create table if not exists public.penalties (
   created_at bigint not null
 );
 
+alter table public.penalties add column if not exists paid boolean not null default false;
+alter table public.penalties add column if not exists paid_at bigint;
+update public.penalties set paid = false where paid is null;
+
 create index if not exists penalties_username_idx on public.penalties(username);
 create index if not exists penalties_created_at_idx on public.penalties(created_at desc);
 
