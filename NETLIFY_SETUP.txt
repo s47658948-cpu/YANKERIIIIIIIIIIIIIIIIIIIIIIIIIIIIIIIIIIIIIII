@@ -23,3 +23,13 @@ IMPORTANT:
 - Rank 10+: penalties panel.
 - Rank 11+: member tickets/management sections.
 - Rank 12+: cafe tickets.
+
+ACCESS RULES (FINAL)
+- Rank 10: penalties panel only (plus member list data needed to select a member for a penalty); no member-ticket/cafe-ticket/request sections.
+- Rank 11: members + member tickets; no penalties; no cafe tickets.
+- Rank 12+: members + member tickets + cafe tickets; no penalties.
+- Owner: full access.
+
+TICKET MESSAGE COMPATIBILITY
+The migration adds both the new ticket_messages columns and legacy-compatible columns
+(sender/body and sender_role/message), so existing Supabase databases can continue to work.

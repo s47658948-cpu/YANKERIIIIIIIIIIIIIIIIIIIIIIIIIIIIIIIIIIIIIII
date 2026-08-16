@@ -111,6 +111,10 @@ create table if not exists public.ticket_messages (
   created_at bigint not null
 );
 
+alter table public.ticket_messages add column if not exists sender_role text not null default 'user';
+alter table public.ticket_messages add column if not exists sender_username text not null default '';
+alter table public.ticket_messages add column if not exists message text not null default '';
+
 alter table public.ticket_messages add column if not exists sender text not null default 'user';
 alter table public.ticket_messages add column if not exists sender_name text not null default '';
 alter table public.ticket_messages add column if not exists body text not null default '';
@@ -137,6 +141,18 @@ create table if not exists public.site_settings (
   value jsonb not null default '{}'::jsonb,
   updated_at bigint not null default 0
 );
+
+update public.ticket_messages
+set sender = coalesce(nullif(sender,''), sender_role, 'user')
+where sender is null or sender = '';
+
+update public.ticket_messages
+set sender_name = coalesce(nullif(sender_name,''), sender_username, '')
+where sender_name is null or sender_name = '';
+
+update public.ticket_messages
+set body = coalesce(nullif(body,''), message, '')
+where body is null or body = '';
 
 -- Refresh PostgREST schema cache after creating the tables.
 notify pgrst, 'reload schema';

@@ -165,7 +165,7 @@ function mapTicket(t, messages=[]){
   return { id:t.id, username:t.username||"", name:t.name||"", subject:t.subject||"", category:t.category||"member", status:t.status||"open", createdAt:Number(t.created_at||0), updatedAt:Number(t.updated_at||t.created_at||0), messages };
 }
 function mapTicketMessage(m){
-  return { id:m.id, ticketId:m.ticket_id, sender:m.sender||"user", senderName:m.sender_name||"", body:m.body||"", createdAt:Number(m.created_at||0) };
+  return { id:m.id, ticketId:m.ticket_id, sender:m.sender||m.sender_role||"user", senderName:m.sender_name||m.sender_username||"", body:m.body||m.message||"", createdAt:Number(m.created_at||0) };
 }
 async function getAnnouncements(){
   return (await db("announcements?select=*&order=created_at.desc") || []).map(mapAnnouncement);
@@ -310,12 +310,14 @@ export async function handler(event) {
       const id=crypto.randomUUID();
       const ticket={id,username,name,subject,category,status:"open",created_at:now,updated_at:now};
       await db("tickets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify(ticket)});
-      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:id,sender:"user",sender_name:name,body:message,created_at:now})});
+      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:id,sender:"user",sender_name:name,body:message,sender_role:"user",sender_username:username,message:message,created_at:now})});
       const tickets=await getTickets(username);
       return reply(201,{ok:true,ticket:tickets[0],cooldown:10});
     }
 
     if (event.httpMethod === "POST" && action === "ticket-create-admin") {
+      const actor=getAdminActor(event);
+      if(!actor || (!actor.isOwner && Number(actor.rank)<11)) return reply(403,{ok:false,error:"ارسال تیکت از پنل فقط برای رنک 11 به بالا است."});
       const username=normalizeUsername(body.username);
       const subject=String(body.subject||"").trim();
       const message=String(body.message||"").trim();
@@ -326,7 +328,7 @@ export async function handler(event) {
       const now=Date.now(), id=crypto.randomUUID();
       const ticket={id,username:member.username,name:member.name||member.username,subject,category:"member",status:"answered",created_at:now,updated_at:now};
       await db("tickets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify(ticket)});
-      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:id,sender:"admin",sender_name:ADMIN_USER,body:message,created_at:now})});
+      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:id,sender:"admin",sender_name:ADMIN_USER,body:message,sender_role:"admin",sender_username:ADMIN_USER,message:message,created_at:now})});
       const tickets=await getTickets(member.username);
       return reply(201,{ok:true,ticket:tickets[0]});
     }
@@ -371,6 +373,9 @@ export async function handler(event) {
             sender:"user",
             sender_name:ticket.name || username,
             body:text,
+            sender_role:"user",
+            sender_username:username,
+            message:text,
             created_at:now
           })
         });
@@ -394,6 +399,9 @@ export async function handler(event) {
         sender:"admin",
         sender_name:ADMIN_USER,
         body:text,
+        sender_role:"admin",
+        sender_username:actor.username||ADMIN_USER,
+        message:text,
         created_at:now
       })});
 
@@ -414,7 +422,7 @@ export async function handler(event) {
       return reply(403, { ok: false, error: "این بخش فقط برای Owner در دسترس است." });
     }
 
-    if (isMemberAdminToken(event) && Number(getTokenPayload(event)?.rank||0)<11 && !["penalties","penalty-create","penalty-delete"].includes(action)) {
+    if (isMemberAdminToken(event) && Number(getTokenPayload(event)?.rank||0)===10 && !["penalties","penalty-create","penalty-delete","members"].includes(action)) {
       return reply(403,{ok:false,error:"رنک 10 فقط به پنل جریمه‌ها دسترسی دارد."});
     }
 
@@ -453,6 +461,7 @@ export async function handler(event) {
     if (event.httpMethod === "GET" && action === "tickets-admin") {
       const actor=getAdminActor(event);
       if(!actor) return reply(401,{ok:false,error:"دسترسی مدیریت لازم است."});
+      if(!actor.isOwner && Number(actor.rank)<11) return reply(403,{ok:false,error:"تیکت‌ها فقط برای رنک 11 به بالا هستند."});
       const all=await getTickets();
       const visible=actor.isOwner ? all : all.filter(t=>t.category !== "cafe" || Number(actor.rank)>=12);
       return reply(200,{ok:true,tickets:visible});
@@ -552,12 +561,12 @@ export async function handler(event) {
 
 
     if (event.httpMethod === "GET" && action === "penalties") {
-      const actor=getAdminActor(event); if(!actor || (!actor.isOwner && Number(actor.rank)<10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 به بالا است."});
+      const actor=getAdminActor(event); if(!actor || (!actor.isOwner && Number(actor.rank)!==10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 است."});
       const rows=await db("penalties?select=*&order=created_at.desc");
       return reply(200,{ok:true,penalties:(rows||[]).map(p=>({id:p.id,username:p.username||"",name:p.name||"",reason:p.reason||"",amount:Number(p.amount||0),createdAt:Number(p.created_at||0),issuedBy:p.issued_by||""}))});
     }
     if (event.httpMethod === "POST" && action === "penalty-create") {
-      const actor=getAdminActor(event); if(!actor || (!actor.isOwner && Number(actor.rank)<10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 به بالا است."});
+      const actor=getAdminActor(event); if(!actor || (!actor.isOwner && Number(actor.rank)!==10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 است."});
       const username=normalizeUsername(body.username), reason=String(body.reason||"").trim(), amount=Number(body.amount)||0;
       if(!username||!reason) return reply(400,{ok:false,error:"عضو و دلیل جریمه الزامی است."});
       const rows=await db(`members?username=eq.${encodeURIComponent(username)}&limit=1`); if(!rows?.length) return reply(404,{ok:false,error:"عضو تأییدشده پیدا نشد."});
@@ -566,7 +575,7 @@ export async function handler(event) {
       return reply(201,{ok:true,penalty:out?.[0]||row});
     }
     if (event.httpMethod === "POST" && action === "penalty-delete") {
-      const actor=getAdminActor(event); if(!actor || (!actor.isOwner && Number(actor.rank)<10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 به بالا است."});
+      const actor=getAdminActor(event); if(!actor || (!actor.isOwner && Number(actor.rank)!==10)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 است."});
       const id=String(body.id||""); if(!id) return reply(400,{ok:false,error:"شناسه جریمه نامعتبر است."});
       await db(`penalties?id=eq.${encodeURIComponent(id)}`,{method:"DELETE"}); return reply(200,{ok:true});
     }
