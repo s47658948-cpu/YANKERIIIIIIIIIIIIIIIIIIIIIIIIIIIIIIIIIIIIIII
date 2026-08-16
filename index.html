@@ -743,7 +743,7 @@ async function refreshMyStatus(){
     const oldStatus = JSON.stringify(STATE.requests);
     const oldRank = STATE.members.find(x=>x.username===STATE.user.username)?.rank || null;
     STATE.requests = nextRequests;
-    STATE.penalties = (r.penalties||[]).map(p=>({id:p.id,username:p.username,name:p.name,reason:p.reason,amount:Number(p.amount||0),issuedBy:p.issuedBy||"",createdAt:Number(p.createdAt||0),paid:!!p.paid,paidAt:p.paidAt||null}));
+    STATE.penalties = (r.penalties||[]).map(p=>({id:p.id,username:p.username,name:p.name,reason:p.reason,amount:Number(p.amount||0),issuedBy:p.issuedBy||"owner",paymentNotice:p.paymentNotice||"",createdAt:Number(p.createdAt||0),paid:!!p.paid,paidAt:p.paidAt||null}));
 
     if(r.member){
       const m=mapClientMember(r.member);
@@ -910,14 +910,14 @@ function nav(route){
   if(location.hash!==target) location.hash=target;
   window.scrollTo({top:0,behavior:"instant"});
   render();
-  if((next==="profile" || next==="join" || next==="announcements") && STATE.user){
+  if((next==="home" || next==="profile" || next==="join" || next==="announcements") && STATE.user){
     refreshMyStatus().then(async()=>{ if(next==="announcements") await refreshAnnouncements(); if(STATE.route===next) render(); }).catch(()=>{});
   }
 }
 window.addEventListener("hashchange",()=>{
   STATE.route=normalizeRoute(location.hash);
   render();
-  if(STATE.user && (STATE.route==="profile" || STATE.route==="join" || STATE.route==="announcements")){
+  if(STATE.user && (STATE.route==="home" || STATE.route==="profile" || STATE.route==="join" || STATE.route==="announcements")){
     refreshMyStatus().then(async()=>{ if(STATE.route==="announcements") await refreshAnnouncements(); if(STATE.route==="profile" || STATE.route==="join" || STATE.route==="announcements") render(); }).catch(()=>{});
   }
   if(STATE.user && STATE.route==="tickets") refreshTickets().then(()=>render()).catch(()=>{});
@@ -1310,6 +1310,17 @@ function viewHome(){
       ${radarWidget()}
     </div>
   </div>
+
+  ${STATE.user && hasApprovedMembership() && STATE.penalties.length ? `<div class="section" style="padding-top:0;">
+    <div class="wrap">
+      <div class="card" style="border:2px solid rgba(255,55,85,.78);background:linear-gradient(135deg,rgba(255,55,85,.16),rgba(13,19,34,.94));box-shadow:0 0 0 1px rgba(255,55,85,.12),0 18px 60px rgba(255,40,70,.16);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+          <div><div style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:#5a1221;color:#ffb5c0;font-weight:900;font-size:12px;">🚨 هشدار جریمه</div><h3 style="margin:10px 0 5px;">برای حساب شما جریمه ثبت شده است</h3><p class="panel-sub" style="margin:0;">برای مشاهده مبلغ، دلیل و اطلاعیه پرداخت وارد پروفایل شوید.</p></div>
+          <button class="btn btn-primary btn-sm" onclick="nav('profile')">مشاهده جریمه</button>
+        </div>
+      </div>
+    </div>
+  </div>` : ''}
 
   <div class="section">
     <div class="wrap">
@@ -2218,6 +2229,6 @@ document.addEventListener("keydown",function(e){
 </html>
 
 <script>
-setInterval(()=>{ if(typeof STATE!=="undefined" && STATE.user && STATE.route!=="join") refreshMyStatus().then(()=>{ if(STATE.route==="profile") render(); }).catch(()=>{}); },15000);
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden && typeof STATE!=="undefined" && STATE.user) refreshMyStatus().then(()=>{ if(STATE.route==="profile") render(); }).catch(()=>{}); });
+setInterval(()=>{ if(typeof STATE!=="undefined" && STATE.user && STATE.route!=="join") refreshMyStatus().then(()=>{ if(STATE.route==="profile" || STATE.route==="home") render(); }).catch(()=>{}); },15000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && typeof STATE!=="undefined" && STATE.user) refreshMyStatus().then(()=>{ if(STATE.route==="profile" || STATE.route==="home") render(); }).catch(()=>{}); });
 </script>

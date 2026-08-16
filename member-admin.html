@@ -54,12 +54,12 @@ function applyRankUI(){
   }
 }
 function activate(page){document.querySelectorAll('.nav[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.dataset.section===page))}
-document.querySelectorAll('.nav[data-page]').forEach(x=>x.onclick=()=>activate(x.dataset.page));document.querySelectorAll('[data-ticket-tab]').forEach(x=>x.onclick=()=>{ticketTab=x.dataset.ticketTab;document.querySelectorAll('[data-ticket-tab]').forEach(b=>b.classList.toggle('active',b.dataset.ticketTab===ticketTab));renderTickets()});
+document.querySelectorAll('.nav[data-page]').forEach(x=>x.onclick=()=>{if(tokenRank()===10 && x.dataset.page!=='penalties') return; activate(x.dataset.page)});document.querySelectorAll('[data-ticket-tab]').forEach(x=>x.onclick=()=>{ticketTab=x.dataset.ticketTab;document.querySelectorAll('[data-ticket-tab]').forEach(b=>b.classList.toggle('active',b.dataset.ticketTab===ticketTab));renderTickets()});
 async function load(){
   const rnk=tokenRank();
   const canPenalties=(rnk===10||rnk>=12);
   const calls=rnk===10
-    ? [Promise.resolve({requests:[]}),api('members'),Promise.resolve({tickets:[]}),api('penalties')]
+    ? [Promise.resolve({requests:[]}),api('penalty-members'),Promise.resolve({tickets:[]}),api('penalties')]
     : [api('requests'),api('members'),api('tickets-admin'),canPenalties?api('penalties'):Promise.resolve({penalties:[]})];
   const results=await Promise.allSettled(calls);
   const [r,m,t,p]=results;
