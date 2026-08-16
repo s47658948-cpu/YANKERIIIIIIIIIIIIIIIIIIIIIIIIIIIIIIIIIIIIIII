@@ -617,7 +617,7 @@ export async function handler(event) {
       const rows=await db(`penalties?id=eq.${encodeURIComponent(id)}&limit=1`);
       if(!rows?.length) return reply(404,{ok:false,error:"جریمه پیدا نشد."});
       const now=Date.now();
-      const out=await db(`penalties?id=eq.${encodeURIComponent(id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({paid:true,payment_status:"paid",paid_at:now})});
+      const out=await db(`penalties?id=eq.${encodeURIComponent(id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({paid:false,payment_status:'pending',paid_at:now})});
       try { await db(`penalty_payment_history?penalty_id=eq.${encodeURIComponent(id)}&status=eq.pending`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({status:"paid",approved_at:now,approved_by:actor.username||ADMIN_USER})}); } catch(e) { console.warn("PAYMENT_HISTORY_UPDATE_FAILED",e?.message||e); }
       return reply(200,{ok:true,penalty:out?.[0]||null});
     }

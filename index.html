@@ -1608,13 +1608,15 @@ function viewProfile(){
 
       ${isMember && STATE.penalties.length ? `<div class="card" style="margin-bottom:22px;border:1px solid rgba(255,96,127,.45);background:linear-gradient(135deg,rgba(255,96,127,.10),rgba(13,19,34,.88));">
         <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
-          <div><div class="section-eyebrow" style="color:#ff7890;">⚠️ هشدار جریمه</div><h3 style="margin:4px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">بعد از پرداخت، درخواست بررسی برای مدیریت ارسال می‌شود و فقط پس از تأیید مدیریت «پرداخت شد» ثبت می‌شود.</p></div>
+          <div><div class="section-eyebrow" style="color:#ff7890;">⚠️ هشدار جریمه</div><h3 style="margin:4px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">بعد از پرداخت، درخواست بررسی برای مدیریت ارسال می‌شود و فقط پس از تأیید مدیریت «ارسال برای بررسی» ثبت می‌شود.</p></div>
           <span class="badge badge-pending">${STATE.penalties.filter(x=>!x.paid).length} باز</span>
         </div>
         <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.map(p=>{
           const status=p.paid?'approved':(p.paymentStatus==='pending_review'?'pending_review':'unpaid');
           const statusHtml=status==='approved'?'<span class="badge badge-success">✓ پرداخت توسط مدیریت تأیید شد</span>':status==='pending_review'?'<span class="badge badge-pending">⏳ پرداخت در حال بررسی مدیریت</span>':'<span class="badge badge-pending">پرداخت نشده</span>';
-          const notice=p.paymentNotice||"درود جهت پرداخت جریمه یه خود اطلاعات زیر را مطالعه کنید🌹\nشماره کارت جهت پرداخت[287.496] 🪪 Agha Esi\nبعد از واریز به خود رکسار و یا اقا اسی پیام بدید و رسید رو ارسال کنید✅";
+          const notice=p.paymentNotice||"درود جهت ارسال پرداخت برای بررسی یه خود اطلاعات زیر را مطالعه کنید🌹
+شماره کارت جهت پرداخت[287.496] 🪪 Agha Esi
+بعد از واریز به خود رکسار و یا اقا اسی پیام بدید و رسید رو ارسال کنید✅";
           return `<div style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,10,22,.55);">
             <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>${esc(p.reason)}</strong><span>${esc(p.amount)} دلار</span></div>
             <div class="panel-sub" style="margin:7px 0;">ثبت‌شده توسط ${esc(p.issuedBy||"مدیریت")}</div>

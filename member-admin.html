@@ -96,7 +96,7 @@ function renderPenalties(){
   $('penalties').innerHTML=list.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ (دلار)</th><th>وضعیت پرداخت</th><th>پیام خودکار</th><th>عملیات</th></tr></thead><tbody>${list.map(p=>{
     const status=p.paid?'<span class="badge answered">✓ پرداخت‌شده</span>':p.paymentStatus==='pending_review'?'<span class="badge open">⏳ در انتظار تأیید</span>':'<span class="badge pending">پرداخت نشده</span>';
     const action=p.paymentStatus==='pending_review'&&!p.paid?`<button class="btn success" onclick="approvePenaltyPayment('${esc(p.id)}')">✓ تأیید پرداخت</button>`:'';
-    const notice=esc(p.paymentNotice||'پیام پرداخت جریمه ثبت نشده است.').replace(/\n/g,'<br>');
+    const notice=esc(p.paymentNotice||'پیام ارسال پرداخت برای بررسی ثبت نشده است.').replace(/\n/g,'<br>');
     return `<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)} دلار</td><td>${status}</td><td><div class="muted" style="max-width:340px;white-space:normal;line-height:1.8">${notice}</div></td><td><div class="actions">${action}<button class="btn danger" onclick="deletePenalty('${esc(p.id)}')">حذف</button></div></td></tr>`;
   }).join('')}</tbody></table>`:'<div class="empty">موردی در این لیست وجود ندارد.</div>';
 }
