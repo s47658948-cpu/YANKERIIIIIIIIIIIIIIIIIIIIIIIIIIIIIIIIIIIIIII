@@ -9,13 +9,13 @@
 </style></head>
 <body><div class="shell"><div class="layout">
 <aside><div class="brand"><div class="logo">Y</div><div><b>YANKER</b><small>MEMBER CONTROL</small></div></div>
-<button class="nav active" data-page="home">⌂ <span>نمای کلی</span></button><button class="nav" data-page="requests">◈ <span>درخواست‌ها</span><span class="count" id="navPending">0</span></button><button class="nav" data-page="members">♟ <span>اعضا</span></button><button class="nav" data-page="tickets">✦ <span>تیکت اعضا</span><span class="count" id="navOpen">0</span></button><button class="nav" data-page="cafeTickets">☕ <span>تیکت کافه</span><span class="count" id="navCafe">0</span></button><button class="nav" data-page="penalties">⚠️ <span>جریمه‌ها</span><span class="count" id="navPenalties">0</span></button><button class="nav" data-page="paidPenalties">💳 <span>جریمه‌های پرداخت‌شده</span><span class="count" id="navPaidPenalties">0</span></button><div class="spacer"></div><button class="nav" id="refresh">↻ <span>بروزرسانی</span></button><button class="nav" onclick="window.parent?.closeEmbeddedAdmin?.()">× <span>بستن پنل</span></button></aside>
-<main class="content"><header class="top"><div><div class="eyebrow">YANKER / MEMBER ADMIN</div><h1>مرکز کنترل اعضا</h1><div class="muted">پنل اختصاصی رنک 10+ — بدون نیاز به نقش Owner/Admin؛ سطح دسترسی فقط بر اساس رنک کنترل می‌شود.</div></div><div class="identity"><i class="dot"></i><span>دسترسی رنک 10+</span></div></header>
-<section class="section active" data-section="home"><div class="stats"><div class="stat"><span class="muted">درخواست‌های در انتظار</span><b id="sPending">0</b></div><div class="stat"><span class="muted">تیکت‌های فعال</span><b id="sOpen">0</b></div><div class="stat"><span class="muted">تیکت‌های بسته</span><b id="sClosed">0</b></div><div class="stat"><span class="muted">اعضای رسمی</span><b id="sMembers">0</b></div></div><div class="card"><div class="head"><div><h3>قوانین دسترسی این پنل</h3><span class="muted">سطح دسترسی از سمت سرور کنترل می‌شود.</span></div></div><div class="notice">✓ دسترسی پنل بر اساس رنک عضو &nbsp; • &nbsp; ✓ Rank 10 فقط جریمه‌ها &nbsp; • &nbsp; ✓ Rank 11+ مدیریت اعضا و تیکت‌ها</div><div class="notice danger-note" style="margin-top:10px">🔒 اعضای رنک 11 تا 14 برای رنک 11+ قفل هستند و قابل تغییر رنک یا حذف نیستند.</div></div></section>
+<button class="nav active" data-page="home">⌂ <span>نمای کلی</span></button><button class="nav" data-page="requests">◈ <span>درخواست‌ها</span><span class="count" id="navPending">0</span></button><button class="nav" data-page="members">♟ <span>اعضا</span></button><button class="nav" data-page="tickets">✦ <span>تیکت اعضا</span><span class="count" id="navOpen">0</span></button><button class="nav" data-page="cafeTickets">☕ <span>تیکت کافه</span><span class="count" id="navCafe">0</span></button><button class="nav" data-page="penalties">⚠️ <span>جریمه‌ها</span><span class="count" id="navPenalties">0</span></button><div class="spacer"></div><button class="nav" id="refresh">↻ <span>بروزرسانی</span></button><button class="nav" onclick="window.parent?.closeEmbeddedAdmin?.()">× <span>بستن پنل</span></button></aside>
+<main class="content"><header class="top"><div><div class="eyebrow">YANKER / MEMBER ADMIN</div><h1>مرکز کنترل اعضا</h1><div class="muted">پنل اختصاصی رنک 10+ — تیکت اعضا، تیکت کافه و جریمه‌ها</div></div><div class="identity"><i class="dot"></i><span>دسترسی رنک 10+</span></div></header>
+<section class="section active" data-section="home"><div class="stats"><div class="stat"><span class="muted">درخواست‌های در انتظار</span><b id="sPending">0</b></div><div class="stat"><span class="muted">تیکت‌های فعال</span><b id="sOpen">0</b></div><div class="stat"><span class="muted">تیکت‌های بسته</span><b id="sClosed">0</b></div><div class="stat"><span class="muted">اعضای رسمی</span><b id="sMembers">0</b></div></div><div class="card"><div class="head"><div><h3>قوانین دسترسی این پنل</h3><span class="muted">سطح دسترسی از سمت سرور کنترل می‌شود.</span></div></div><div class="notice">✓ قبول درخواست عضویت &nbsp; • &nbsp; ✓ مدیریت کامل تیکت‌ها &nbsp; • &nbsp; ✓ حذف اعضای رنک 1 تا 10 &nbsp; • &nbsp; ✓ تغییر رنک 1 تا 10</div><div class="notice danger-note" style="margin-top:10px">🔒 اعضای رنک 11 تا 14 برای رنک 11+ قفل هستند و قابل تغییر رنک یا حذف نیستند.</div></div></section>
 <section class="section" data-section="requests"><div class="card"><div class="head"><div><h2>درخواست‌های عضویت</h2><span class="muted">فقط تأیید درخواست در این پنل فعال است.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="requests" class="table"></div></div></section>
 <section class="section" data-section="members"><div class="card"><div class="head"><div><h2>اعضای رسمی</h2><span class="muted">اعضای رنک 11+ با قفل امنیتی نمایش داده می‌شوند.</span></div><div class="search"><input id="memberSearch" placeholder="جستجوی نام یا username..." oninput="renderMembers()"></div></div><div id="members" class="table"></div></div></section>
 <section class="section" data-section="tickets"><div class="card"><div class="head"><div><h2>مرکز تیکت</h2><span class="muted">تیکت‌های فعال و بسته‌شده با حفظ کامل سابقه.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div class="tabs"><button class="tab active" onclick="ticketKind='member';renderTickets()">تیکت اعضا</button><button class="tab" onclick="ticketKind='cafe';renderTickets()">☕ کافه</button><button class="tab active" data-ticket-tab="open">فعال <b id="openCount">0</b></button><button class="tab" data-ticket-tab="closed">بسته‌شده <b id="closedCount">0</b></button><button class="tab" data-ticket-tab="all">همه <b id="allCount">0</b></button></div><div id="tickets"></div></div><div class="card"><div class="head"><div><h3>ارسال تیکت برای عضو</h3><span class="muted">یک گفتگوی جدید مستقیماً برای عضو ایجاد کن.</span></div></div><div class="form"><label>عضو<select id="ticketMember"></select></label><label>موضوع<input id="ticketSubject" maxlength="120" placeholder="موضوع"></label><label class="full">پیام<textarea id="ticketBody" maxlength="3000" placeholder="متن پیام..."></textarea></label><button class="btn primary" id="sendTicket">ارسال تیکت</button></div></div></section>
-<section class="section" data-section="cafeTickets"><div class="card"><div class="head"><div><h2>☕ تیکت‌های کافه</h2><span class="muted">فقط Rank 12+ می‌تواند این تیکت‌ها را ببیند و پاسخ دهد.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="cafeTickets"></div></div></section><section class="section" data-section="penalties"><div class="card"><div class="head"><div><h2>⚠️ پنل جریمه‌ها</h2><span class="muted">دسترسی برای Rank 10 و Rank 12+ .</span></div><button class="btn ghost" onclick="load()">↻</button></div><div class="form"><label>عضو<select id="penaltyMember"></select></label><label>مبلغ<input id="penaltyAmount" type="number" min="0" placeholder="مثلاً 5000"></label><label class="full">دلیل جریمه<textarea id="penaltyReason" maxlength="1000" placeholder="دلیل جریمه..."></textarea></label><button class="btn danger" id="createPenalty">ثبت جریمه</button></div><div id="penalties" class="table" style="margin-top:18px"></div></div></section><section class="section" data-section="paidPenalties"><div class="card"><div class="head"><div><h2>💳 جریمه‌های پرداخت‌شده</h2><span class="muted">این بخش فقط جریمه‌هایی را نشان می‌دهد که مدیریت تأیید کرده است.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="paidPenalties" class="table"></div></div></section>
+<section class="section" data-section="cafeTickets"><div class="card"><div class="head"><div><h2>☕ تیکت‌های کافه</h2><span class="muted">فقط Rank 12+ می‌تواند این تیکت‌ها را ببیند و پاسخ دهد.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div id="cafeTickets"></div></div></section><section class="section" data-section="penalties"><div class="card"><div class="head"><div><h2>⚠️ پنل جریمه‌ها</h2><span class="muted">Rank 10 فقط این بخش را می‌بیند؛ Rank 11+ نیز به مدیریت اعضا دسترسی دارد.</span></div><button class="btn ghost" onclick="load()">↻</button></div><div class="form"><label>عضو<select id="penaltyMember"></select></label><label>مبلغ<input id="penaltyAmount" type="number" min="0" placeholder="مثلاً 5000"></label><label class="full">دلیل جریمه<textarea id="penaltyReason" maxlength="1000" placeholder="دلیل جریمه..."></textarea></label><button class="btn danger" id="createPenalty">ثبت جریمه</button></div><div id="penalties" class="table" style="margin-top:18px"></div><div class="card" style="margin-top:18px"><div class="head"><div><h3>💳 جریمه‌های پرداخت‌شده</h3><span class="muted">جریمه‌هایی که مدیریت تأیید کرده است.</span></div></div><div id="paidPenalties" class="table"></div></div></div></section>
 </main></div></div>
 <script>
 'use strict';
@@ -26,48 +26,36 @@ function tokenRank(){try{const e=token.split('.')[0];return Number(JSON.parse(at
 function applyRankUI(){
   const r=tokenRank();
   const penaltyNav=document.querySelector('.nav[data-page="penalties"]');
-  const paidPenaltyNav=document.querySelector('.nav[data-page="paidPenalties"]');
   const penaltySection=document.querySelector('.section[data-section="penalties"]');
-  const paidPenaltySection=document.querySelector('.section[data-section="paidPenalties"]');
-  const normalNavs=document.querySelectorAll('.nav[data-page="home"],.nav[data-page="requests"],.nav[data-page="members"],.nav[data-page="tickets"]');
-  const cafeNav=document.querySelector('.nav[data-page="cafeTickets"]');
-  const cafeSection=document.querySelector('.section[data-section="cafeTickets"]');
+  const memberNavs=document.querySelectorAll('.nav[data-page="requests"],.nav[data-page="members"],.nav[data-page="tickets"],.nav[data-page="cafeTickets"]');
   if(r===10){
-    normalNavs.forEach(x=>x.style.display='none');
-    if(cafeNav) cafeNav.style.display='none';
-    if(cafeSection) cafeSection.style.display='none';
+    memberNavs.forEach(x=>x.style.display='none');
     if(penaltyNav) penaltyNav.style.display='';
-    if(paidPenaltyNav) paidPenaltyNav.style.display='';
     if(penaltySection) penaltySection.style.display='';
-    if(paidPenaltySection) paidPenaltySection.style.display='';
     activate('penalties');
-  }else if(r===11){
-    normalNavs.forEach(x=>x.style.display='');
-    if(cafeNav) cafeNav.style.display='none';
-    if(cafeSection) cafeSection.style.display='none';
-    if(penaltyNav) penaltyNav.style.display='';
-    if(paidPenaltyNav) paidPenaltyNav.style.display='';
-    if(penaltySection) penaltySection.style.display='';
-    if(paidPenaltySection) paidPenaltySection.style.display='';
-    activate('members');
   }else if(r>=12){
-    normalNavs.forEach(x=>x.style.display='');
-    if(cafeNav) cafeNav.style.display='';
-    if(cafeSection) cafeSection.style.display='';
+    memberNavs.forEach(x=>x.style.display='');
     if(penaltyNav) penaltyNav.style.display='';
-    if(paidPenaltyNav) paidPenaltyNav.style.display='';
     if(penaltySection) penaltySection.style.display='';
-    if(paidPenaltySection) paidPenaltySection.style.display='';
+    if(document.querySelector('.section.active[data-section="penalties"]')) activate('members');
+  }else if(r===11){
+    memberNavs.forEach(x=>x.style.display='');
+    if(penaltyNav) penaltyNav.style.display='';
+    if(penaltySection) penaltySection.style.display='';
     activate('members');
+  }else{
+    memberNavs.forEach(x=>x.style.display='none');
+    if(penaltyNav) penaltyNav.style.display='none';
+    if(penaltySection) penaltySection.style.display='none';
   }
 }
 function activate(page){document.querySelectorAll('.nav[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.dataset.section===page))}
-document.querySelectorAll('.nav[data-page]').forEach(x=>x.onclick=()=>{if(tokenRank()===10 && !['penalties','paidPenalties'].includes(x.dataset.page)) return; if(tokenRank()===11 && x.dataset.page==='cafeTickets') return; activate(x.dataset.page)});document.querySelectorAll('[data-ticket-tab]').forEach(x=>x.onclick=()=>{ticketTab=x.dataset.ticketTab;document.querySelectorAll('[data-ticket-tab]').forEach(b=>b.classList.toggle('active',b.dataset.ticketTab===ticketTab));renderTickets()});
+document.querySelectorAll('.nav[data-page]').forEach(x=>x.onclick=()=>activate(x.dataset.page));document.querySelectorAll('[data-ticket-tab]').forEach(x=>x.onclick=()=>{ticketTab=x.dataset.ticketTab;document.querySelectorAll('[data-ticket-tab]').forEach(b=>b.classList.toggle('active',b.dataset.ticketTab===ticketTab));renderTickets()});
 async function load(){
   const rnk=tokenRank();
-  const canPenalties=(rnk>=10);
+  const canPenalties=(rnk===10||rnk>=12);
   const calls=rnk===10
-    ? [Promise.resolve({requests:[]}),api('penalty-members'),Promise.resolve({tickets:[]}),api('penalties')]
+    ? [Promise.resolve({requests:[]}),api('members'),Promise.resolve({tickets:[]}),api('penalties')]
     : [api('requests'),api('members'),api('tickets-admin'),canPenalties?api('penalties'):Promise.resolve({penalties:[]})];
   const results=await Promise.allSettled(calls);
   const [r,m,t,p]=results;
@@ -75,7 +63,6 @@ async function load(){
   DATA.members=m.status==='fulfilled'?(m.value.members||[]):[];
   DATA.tickets=t.status==='fulfilled'?(t.value.tickets||[]):[];
   DATA.penalties=p.status==='fulfilled'?(p.value.penalties||[]):[];
-  if($('navPenalties')) $('navPenalties').textContent=DATA.penalties.filter(x=>!x.paid).length; if($('navPaidPenalties')) $('navPaidPenalties').textContent=DATA.penalties.filter(x=>x.paid).length;
   const errors=results.filter(x=>x.status==='rejected').map(x=>x.reason?.message||'خطای نامشخص');
 const pending=DATA.requests.filter(x=>x.status==='pending').length,open=DATA.tickets.filter(x=>x.status!=='closed').length,closed=DATA.tickets.filter(x=>x.status==='closed').length;$('sPending').textContent=pending;$('sOpen').textContent=open;$('sClosed').textContent=closed;$('sMembers').textContent=DATA.members.length;$('navPending').textContent=pending;$('navOpen').textContent=open;$('openCount').textContent=open;$('closedCount').textContent=closed;$('allCount').textContent=DATA.tickets.length;renderRequests();renderMembers();renderTickets();renderPenalties();$('ticketMember').innerHTML=DATA.members.map(x=>'<option value="'+esc(x.username)+'">'+esc(x.name)+' — @'+esc(x.username)+'</option>').join('')||'<option value="">عضوی وجود ندارد</option>';if($('penaltyMember')) $('penaltyMember').innerHTML=DATA.members.map(x=>'<option value="'+esc(x.username)+'">'+esc(x.name)+' — @'+esc(x.username)+'</option>').join('')||'<option value="">عضوی وجود ندارد</option>';if(errors.length) console.warn('Admin panel partial load:',errors)}
 function renderRequests(){const p=DATA.requests.filter(x=>x.status==='pending');$('requests').innerHTML=p.length?`<table><thead><tr><th>نام</th><th>کاربر</th><th>Discord</th><th>سن</th><th>Play Time</th><th>عملیات</th></tr></thead><tbody>${p.map(x=>`<tr><td>${esc(x.name)}</td><td>@${esc(x.username)}</td><td>${esc(x.discord)}</td><td>${esc(x.cityAge)} / ${esc(x.realAge)}</td><td>${esc(x.playtime)}</td><td><button class="btn success" onclick="approve('${esc(x.id)}')">✓ قبول عضو</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">درخواست در انتظاری وجود ندارد.</div>'}
@@ -109,12 +96,14 @@ async function deleteTicket(id){if(!confirm('تیکت و تمام پیام‌ه�
 $('createPenalty').onclick=async()=>{const username=$('penaltyMember').value,reason=$('penaltyReason').value.trim(),amount=Number($('penaltyAmount').value)||0;if(!username||!reason)return alert('عضو و دلیل جریمه را کامل کنید.');try{await api('penalty-create','POST',{username,reason,amount});$('penaltyReason').value='';$('penaltyAmount').value='';await load()}catch(e){alert(e.message)}};
 function renderPenalties(){
   if(!$('penalties')) return;
-  $('penalties').innerHTML=DATA.penalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>اطلاعیه جریمه</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>${DATA.penalties.map(p=>`<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)}</td><td><div style="white-space:pre-line;max-width:320px;color:#ffc3cc;">${esc(p.paymentNotice||'اطلاعات پرداخت ثبت نشده است.')}</div></td><td>${p.paid?'<span class="badge answered">✓ پرداخت شد</span>':p.paymentStatus==='pending'?'<span class="badge pending">⏳ در انتظار تأیید</span>':'<span class="badge pending">پرداخت نشده</span>'}</td><td>${!p.paid && p.paymentStatus==='pending'?`<button class="btn success" onclick="approvePenaltyPayment('${esc(p.id)}')">✓ تأیید پرداخت</button> `:''}<button class="btn danger" onclick="deletePenalty('${esc(p.id)}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">جریمه‌ای ثبت نشده است.</div>';
-  const paid=DATA.penalties.filter(p=>p.paid); if($('paidPenalties')) $('paidPenalties').innerHTML=paid.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>زمان تأیید</th><th>وضعیت</th></tr></thead><tbody>${paid.map(p=>`<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)}</td><td>${esc(p.issuedBy||'owner')}</td><td>${p.paidAt?new Date(Number(p.paidAt)).toLocaleString('fa-IR'):'-'}</td><td><span class="badge answered">✓ پرداخت‌شده</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty">جریمه پرداخت‌شده‌ای وجود ندارد.</div>';
-
+  const active=DATA.penalties.filter(p=>p.paymentStatus!=="paid" && !p.paid);
+  const paid=DATA.penalties.filter(p=>p.paymentStatus==="paid" || p.paid);
+  $('penalties').innerHTML=active.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>${active.map(p=>`<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)}</td><td>${esc(p.issuedBy||"owner")}</td><td>${p.paymentStatus==='pending'?'<span class="badge pending">در انتظار تأیید</span>':'<span class="badge pending">پرداخت نشده</span>'}</td><td>${p.paymentStatus==='pending'?`<button class="btn success" onclick="approvePenalty('${esc(p.id)}')">✓ تأیید پرداخت</button> `:''}<button class="btn danger" onclick="deletePenalty('${esc(p.id)}')">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">جریمه فعال وجود ندارد.</div>';
+  if($('paidPenalties')) $('paidPenalties').innerHTML=paid.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>زمان تأیید</th></tr></thead><tbody>${paid.map(p=>`<tr><td>${esc(p.name)} · @${esc(p.username)}</td><td>${esc(p.reason)}</td><td>${esc(p.amount)}</td><td>${esc(p.issuedBy||"owner")}</td><td>${p.paidAt?new Date(p.paidAt).toLocaleString('fa-IR'):'-'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">جریمه پرداخت‌شده‌ای وجود ندارد.</div>';
 }
 
-async function approvePenaltyPayment(id){if(!confirm('پرداخت این جریمه تأیید شود؟'))return;try{await api('penalty-payment-approve','POST',{id});await load()}catch(e){alert(e.message)}}
+async function approvePenalty(id){if(!confirm('این پرداخت تأیید شود؟'))return;try{await api('penalty-approve','POST',{id});await load()}catch(e){alert(e.message)}}
+
 async function deletePenalty(id){if(!confirm('این جریمه حذف شود؟'))return;try{await api('penalty-delete','POST',{id});await load()}catch(e){alert(e.message)}}
 $('sendTicket').onclick=async()=>{const username=$('ticketMember').value,subject=$('ticketSubject').value.trim(),message=$('ticketBody').value.trim();if(!username||!subject||!message)return alert('اطلاعات تیکت را کامل کنید.');const b=$('sendTicket');b.disabled=true;b.textContent='در حال ارسال...';try{await api('ticket-create-admin','POST',{username,subject,message});$('ticketSubject').value='';$('ticketBody').value='';await load()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent='ارسال تیکت'}};$('refresh').onclick=()=>load().catch(e=>alert(e.message));
 (async()=>{token=localStorage.getItem('yanker_member_admin_token')||'';if(!token){return}try{await load();applyRankUI()}catch(e){console.error(e);alert(e.message||'خطای بارگذاری پنل')}})();
