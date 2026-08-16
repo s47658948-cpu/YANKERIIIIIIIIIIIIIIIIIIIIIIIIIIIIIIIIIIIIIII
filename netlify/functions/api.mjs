@@ -470,7 +470,7 @@ export async function handler(event) {
 
     if (event.httpMethod === "GET" && action === "penalty-members") {
       const actor=getAdminActor(event);
-      if(!actor || (!actor.isOwner && Number(actor.rank)!==10 && Number(actor.rank)<12)) return reply(403,{ok:false,error:"دسترسی پنل جریمه لازم است."});
+      if(!actor || (!actor.isOwner && Number(actor.rank)<10)) return reply(403,{ok:false,error:"دسترسی پنل جریمه لازم است."});
       return reply(200,{ok:true,members:await getMembers()});
     }
 
