@@ -216,7 +216,7 @@ export async function handler(event) {
         id: crypto.randomUUID(), name, username, password_hash: passwordHash, discord,
         city_age: Number(body.cityAge) || 0, real_age: Number(body.realAge) || 0,
         playtime: Number(body.playtime) || 0, reason, status: "pending", created_at: Date.now(),
-        reviewed_by: null, reviewed_at: null, rank: null
+        reviewed_by: null, reviewed_at: null, rank: "1"
       };
       const inserted = await db("requests", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(request) });
       return reply(201, { ok: true, request: mapRequest(inserted?.[0] || request) });

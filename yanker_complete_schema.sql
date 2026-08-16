@@ -20,6 +20,18 @@ create table if not exists public.requests (
   created_at bigint not null
 );
 
+alter table public.requests add column if not exists rank text not null default '1';
+update public.requests set rank = '1' where rank is null;
+alter table public.requests add column if not exists city_age integer not null default 0;
+alter table public.requests add column if not exists real_age integer not null default 0;
+alter table public.requests add column if not exists playtime text not null default '';
+alter table public.requests add column if not exists discord text not null default '';
+alter table public.requests add column if not exists reason text not null default '';
+alter table public.requests add column if not exists reviewed_by text;
+alter table public.requests add column if not exists reviewed_at bigint;
+alter table public.requests add column if not exists status text not null default 'pending';
+alter table public.requests add column if not exists created_at bigint not null default 0;
+
 create index if not exists requests_username_idx on public.requests(username);
 create index if not exists requests_status_idx on public.requests(status);
 create index if not exists requests_created_at_idx on public.requests(created_at desc);
