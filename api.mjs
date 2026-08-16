@@ -200,19 +200,12 @@ export async function handler(event) {
     }
 
     if (event.httpMethod === "POST" && action === "request") {
-      let name = String(body.name || "").trim();
+      const name = String(body.name || "").trim();
       const username = normalizeUsername(body.username);
       const discord = String(body.discord || "").trim();
       const passwordHash = String(body.passwordHash || "").trim();
       const reason = String(body.reason || "").trim();
-
-      // نام کاربر را اگر فرانت‌اند نفرستاد، از حساب ثبت‌شده بازیابی کن.
-      // این باعث می‌شود درخواست عضویت به‌خاطر displayName خالی بی‌دلیل رد نشود.
-      if (!username || !discord) return reply(400, { ok: false, error: "آیدی دیسکورد و نام کاربری الزامی است." });
-      if (!name) {
-        const profile = await db(`site_users?username=eq.${encodeURIComponent(username)}&select=display_name&limit=1`);
-        name = String(profile?.[0]?.display_name || username).trim() || username;
-      }
+      if (!name || !username || !discord || !reason) return reply(400, { ok: false, error: "اطلاعات ضروری کامل نیست." });
 
       const members = await db(`members?select=id,username&username=eq.${encodeURIComponent(username)}&limit=1`);
       if (members?.length) return reply(409, { ok: false, error: "این کاربر قبلاً عضو رسمی است." });
@@ -235,7 +228,7 @@ export async function handler(event) {
       const requests = await getRequestsFor(username);
       const members = await db(`members?username=eq.${encodeURIComponent(username)}&limit=1`);
       const penalties = await db(`penalties?username=eq.${encodeURIComponent(username)}&order=created_at.desc`) || [];
-      return reply(200, { ok: true, requests, member: mapMember(members?.[0] || null, false), penalties: penalties.map(p => ({ id:p.id, username:p.username||username, name:p.name||username, reason:p.reason||"", amount:Number(p.amount||0), issuedBy:p.issued_by||"", createdAt:Number(p.created_at||0), paid:!!p.paid, paidAt:p.paid_at ? Number(p.paid_at) : null })) });
+      return reply(200, { ok: true, requests, member: mapMember(members?.[0] || null, false), penalties: penalties.map(p => ({ id:p.id, username:p.username||username, name:p.name||username, reason:p.reason||"", amount:Number(p.amount||0), issuedBy:p.issued_by||"", createdAt:Number(p.created_at||0), paid:!!p.paid, paidAt:p.paid_at ? Number(p.paid_at) : null, paymentNotice:`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.` })) });
     }
 
     if (event.httpMethod === "POST" && action === "member-login") {
@@ -325,7 +318,7 @@ export async function handler(event) {
 
     if (event.httpMethod === "POST" && action === "ticket-create-admin") {
       const actor=getAdminActor(event);
-      if(!actor || (!actor.isOwner && Number(actor.rank)<10)) return reply(403,{ok:false,error:"ارسال تیکت از پنل فقط برای رنک 10 به بالا است."});
+      if(!actor || (!actor.isOwner && Number(actor.rank)<11)) return reply(403,{ok:false,error:"ارسال تیکت از پنل فقط برای رنک 11 به بالا است."});
       const username=normalizeUsername(body.username);
       const subject=String(body.subject||"").trim();
       const message=String(body.message||"").trim();
@@ -399,22 +392,17 @@ export async function handler(event) {
       // پاسخ مدیریت: تیکت‌های کافه فقط برای Rank 12+
       const actor=getAdminActor(event);
       if(!actor) return reply(401,{ok:false,error:"دسترسی مدیریت لازم است."});
-      if(!actor.isOwner && Number(actor.rank)<10) return reply(403,{ok:false,error:"پاسخ‌گویی تیکت‌ها از رنک 10 به بالا است."});
+      if(!actor.isOwner && Number(actor.rank)<11) return reply(403,{ok:false,error:"پاسخ‌گویی تیکت‌ها از رنک 11 به بالا است."});
       if(ticket.category === "cafe" && !actor.isOwner && Number(actor.rank)<12) return reply(403,{ok:false,error:"تیکت‌های کافه فقط برای رنک 12 به بالا قابل مشاهده و پاسخ هستند."});
-      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({
-        id:crypto.randomUUID(),
-        ticket_id:id,
-        sender:"admin",
-        sender_name:ADMIN_USER,
-        body:text,
-        sender_role:"admin",
-        sender_username:actor.username||ADMIN_USER,
-        message:text,
-        created_at:now
+      const insertedMessage=await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({
+        id:crypto.randomUUID(), ticket_id:id, sender:"admin", sender_name:actor.username||ADMIN_USER,
+        body:text, sender_role:"admin", sender_username:actor.username||ADMIN_USER, message:text, created_at:now
       })});
-
-      await db(`tickets?id=eq.${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status:"answered",updated_at:now})});
-      return reply(200,{ok:true,ticket:(await getTickets())[0]});
+      if(!insertedMessage?.length) return reply(500,{ok:false,error:"پاسخ در پایگاه‌داده ذخیره نشد."});
+      await db(`tickets?id=eq.${encodeURIComponent(id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({status:"answered",updated_at:now})});
+      const refreshed=await getTickets(ticket.username);
+      const exact=refreshed.find(t=>String(t.id)===String(id)) || refreshed[0] || null;
+      return reply(200,{ok:true,ticket:exact});
     }
 
     if (event.httpMethod === "POST" && action === "penalty-paid") {
@@ -425,42 +413,10 @@ export async function handler(event) {
       if(!members?.length) return reply(403,{ok:false,error:"فقط اعضای تأییدشده می‌توانند وضعیت جریمه خود را تغییر دهند."});
       const rows=await db(`penalties?id=eq.${encodeURIComponent(id)}&username=eq.${encodeURIComponent(username)}&limit=1`);
       if(!rows?.length) return reply(404,{ok:false,error:"جریمه پیدا نشد."});
-      if(rows[0].paid) return reply(200,{ok:true,penalty:rows[0],paymentStatus:"approved"});
-      const ticketRows=await db(`tickets?username=eq.${encodeURIComponent(username)}&subject=eq.${encodeURIComponent("جریمه")}&order=created_at.desc`);
-      const ticket=ticketRows?.find(t=>t.category==="member") || null;
-      const marker=`[[PENALTY_PAYMENT_REQUEST:${id}]]`;
-      const now=Date.now();
-      if(ticket){
-        const messages=await db(`ticket_messages?ticket_id=eq.${encodeURIComponent(ticket.id)}&order=created_at.desc`);
-        const already=messages?.some(m=>String(m.body||m.message||"").includes(marker));
-        if(!already){
-          const msg=`${marker}\nعضو اعلام کرد مبلغ جریمه را پرداخت کرده و درخواست بررسی و تأیید مدیریت را دارد.\nزمان ثبت درخواست: ${new Date(now).toLocaleString("fa-IR")}`;
-          await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:ticket.id,sender:"user",sender_name:username,body:msg,sender_role:"user",sender_username:username,message:msg,created_at:now})});
-          await db(`tickets?id=eq.${encodeURIComponent(ticket.id)}`,{method:"PATCH",body:JSON.stringify({status:"open",updated_at:now})});
-        }
-      }
-      return reply(200,{ok:true,paymentStatus:"pending_review",penalty:{...rows[0],payment_requested_at:now}});
-    }
-
-    if (event.httpMethod === "POST" && action === "penalty-payment-approve") {
-      const actor=getAdminActor(event);
-      if(!actor) return reply(401,{ok:false,error:"دسترسی مدیریت لازم است."});
-      const id=String(body.id||"");
-      if(!id) return reply(400,{ok:false,error:"شناسه جریمه نامعتبر است."});
-      const rows=await db(`penalties?id=eq.${encodeURIComponent(id)}&limit=1`);
-      if(!rows?.length) return reply(404,{ok:false,error:"جریمه پیدا نشد."});
-      const username=normalizeUsername(rows[0].username);
-      const tickets=await db(`tickets?username=eq.${encodeURIComponent(username)}&subject=eq.${encodeURIComponent("جریمه")}&order=created_at.desc`);
-      let requested=false;
-      for(const t of (tickets||[])){
-        const msgs=await db(`ticket_messages?ticket_id=eq.${encodeURIComponent(t.id)}&order=created_at.desc`);
-        if((msgs||[]).some(m=>String(m.body||m.message||"").includes(`[[PENALTY_PAYMENT_REQUEST:${id}]]`))){ requested=true; break; }
-      }
-      if(!requested) return reply(409,{ok:false,error:"این جریمه هنوز درخواست پرداخت برای بررسی ندارد."});
-      if(rows[0].paid) return reply(200,{ok:true,penalty:rows[0],paymentStatus:"approved"});
-      const approvedAt=Date.now();
-      const out=await db(`penalties?id=eq.${encodeURIComponent(id)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({paid:true,paid_at:approvedAt})});
-      return reply(200,{ok:true,penalty:out?.[0]||{...rows[0],paid:true,paid_at:approvedAt},paymentStatus:"approved"});
+      if(rows[0].paid) return reply(200,{ok:true,penalty:rows[0]});
+      const paidAt=Date.now();
+      const out=await db(`penalties?id=eq.${encodeURIComponent(id)}&username=eq.${encodeURIComponent(username)}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({paid:true,paid_at:paidAt})});
+      return reply(200,{ok:true,penalty:out?.[0]||{...rows[0],paid:true,paid_at:paidAt}});
     }
 
     if (!checkToken(event)) return reply(401, { ok: false, error: "دسترسی مدیریت لازم است." });
@@ -476,7 +432,10 @@ export async function handler(event) {
       return reply(403, { ok: false, error: "این بخش فقط برای Owner در دسترس است." });
     }
 
-    // Rank 10+ can use the member-management panel; sensitive actions keep their own checks.\n
+    if (isMemberAdminToken(event) && Number(getTokenPayload(event)?.rank||0)===10 && !["penalties","penalty-create","penalty-delete","members"].includes(action)) {
+      return reply(403,{ok:false,error:"رنک 10 فقط به پنل جریمه‌ها دسترسی دارد."});
+    }
+
     if (event.httpMethod === "GET" && action === "requests") return reply(200, { ok: true, requests: await getRequestsFor() });
 
     if (event.httpMethod === "GET" && action === "stats") {
@@ -615,16 +574,7 @@ export async function handler(event) {
       const actor=getAdminActor(event);
       if(!actor || (!actor.isOwner && Number(actor.rank)!==10 && Number(actor.rank)<12)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 و 12 به بالا است."});
       const rows=await db("penalties?select=*&order=created_at.desc");
-      const penalties=(rows||[]).map(p=>({id:p.id,username:p.username||"",name:p.name||"",reason:p.reason||"",amount:Number(p.amount||0),createdAt:Number(p.created_at||0),issuedBy:p.issued_by||"",paid:!!p.paid,paidAt:p.paid_at?Number(p.paid_at):null,paymentStatus:p.paid?"approved":"unpaid",paymentNotice:"شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496\n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید."}));
-      for(const p of penalties){
-        if(p.paid) continue;
-        const ts=await db(`tickets?username=eq.${encodeURIComponent(p.username)}&subject=eq.${encodeURIComponent("جریمه")}&order=created_at.desc`);
-        for(const t of (ts||[])){
-          const ms=await db(`ticket_messages?ticket_id=eq.${encodeURIComponent(t.id)}&order=created_at.desc`);
-          if((ms||[]).some(m=>String(m.body||m.message||"").includes(`[[PENALTY_PAYMENT_REQUEST:${p.id}]]`))){ p.paymentStatus="pending_review"; break; }
-        }
-      }
-      return reply(200,{ok:true,penalties});
+      return reply(200,{ok:true,penalties:(rows||[]).map(p=>({id:p.id,username:p.username||"",name:p.name||"",reason:p.reason||"",amount:Number(p.amount||0),createdAt:Number(p.created_at||0),issuedBy:p.issued_by||"",paid:!!p.paid,paidAt:p.paid_at?Number(p.paid_at):null,paymentNotice:`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.`}))});
     }
     if (event.httpMethod === "POST" && action === "penalty-create") {
       const actor=getAdminActor(event);
@@ -637,13 +587,10 @@ export async function handler(event) {
       const row={id:crypto.randomUUID(),username,name:rows[0].name||username,reason,amount,issued_by:actor.username||ADMIN_USER,created_at:now,paid:false,paid_at:null};
       const out=await db("penalties",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify(row)});
 
-      // Automatically create a dedicated penalty ticket for the member with the required payment notice.
-      const ticketId=crypto.randomUUID();
+      // Payment instructions belong to the penalty card on the member profile, not to tickets.
       const paymentNotice=`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.`;
-      const ticketMessage=`${paymentNotice}\n\nدلیل جریمه: ${reason}\nمبلغ جریمه: ${amount}`;
-      await db("tickets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:ticketId,username,name:rows[0].name||username,subject:"جریمه",category:"member",status:"open",created_at:now,updated_at:now})});
-      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:ticketId,sender:"admin",sender_name:actor.username||ADMIN_USER,body:ticketMessage,sender_role:"admin",sender_username:actor.username||ADMIN_USER,message:ticketMessage,created_at:now})});
-      return reply(201,{ok:true,penalty:out?.[0]||row,ticketId});
+      const penalty=out?.[0]||row;
+      return reply(201,{ok:true,penalty:{...penalty,paymentNotice}});
     }
     if (event.httpMethod === "POST" && action === "penalty-delete") {
       const actor=getAdminActor(event);
