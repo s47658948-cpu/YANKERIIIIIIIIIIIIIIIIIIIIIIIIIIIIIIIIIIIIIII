@@ -544,6 +544,7 @@ let STATE = {
   activity: [],
   tickets: [],
   penalties: [],
+  messages: [],
   loaded: false,
   adminTab: "overview",
   ticketAdminTab: "open",
@@ -743,7 +744,8 @@ async function refreshMyStatus(){
     const oldStatus = JSON.stringify(STATE.requests);
     const oldRank = STATE.members.find(x=>x.username===STATE.user.username)?.rank || null;
     STATE.requests = nextRequests;
-    STATE.penalties = (r.penalties||[]).map(p=>({id:p.id,username:p.username,name:p.name,reason:p.reason,amount:Number(p.amount||0),issuedBy:p.issuedBy||"owner",paymentNotice:p.paymentNotice||"",createdAt:Number(p.createdAt||0),paid:!!p.paid,paidAt:p.paidAt||null}));
+    STATE.penalties = (r.penalties||[]).map(p=>({id:p.id,username:p.username,name:p.name,reason:p.reason,amount:Number(p.amount||0),issuedBy:p.issuedBy||"owner",paymentNotice:p.paymentNotice||"",createdAt:Number(p.createdAt||0),paid:!!p.paid,paymentStatus:p.paymentStatus|| (p.paid?'paid':'unpaid'),paymentSubmittedAt:p.paymentSubmittedAt||null,paidAt:p.paidAt||null}));
+    STATE.messages = (r.messages||[]).map(m=>({id:m.id,username:m.username,sender:m.sender||"owner",body:m.body||"",createdAt:Number(m.createdAt||0),read:!!m.read}));
 
     if(r.member){
       const m=mapClientMember(r.member);
@@ -1311,7 +1313,7 @@ function viewHome(){
     </div>
   </div>
 
-  ${STATE.user && hasApprovedMembership() && STATE.penalties.length ? `<div class="section" style="padding-top:0;">
+  ${STATE.user && hasApprovedMembership() && STATE.penalties.some(x=>!x.paid) ? `<div class="section" style="padding-top:0;">
     <div class="wrap">
       <div class="card" style="border:2px solid rgba(255,55,85,.78);background:linear-gradient(135deg,rgba(255,55,85,.16),rgba(13,19,34,.94));box-shadow:0 0 0 1px rgba(255,55,85,.12),0 18px 60px rgba(255,40,70,.16);">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
@@ -1322,6 +1324,7 @@ function viewHome(){
     </div>
   </div>` : ''}
 
+  ${STATE.user && hasApprovedMembership() && STATE.messages.length ? `<div class="section" style="padding-top:0;"><div class="wrap"><div class="card" style="border:2px solid rgba(49,94,255,.5);background:linear-gradient(135deg,rgba(49,94,255,.12),rgba(13,19,34,.94));"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;"><div><div style="display:inline-flex;padding:7px 12px;border-radius:999px;background:#132342;color:#9db7ff;font-weight:900;font-size:12px;">💬 پیام مدیریت</div><h3 style="margin:10px 0 5px;">یک پیام از مدیریت دارید</h3><p class="panel-sub" style="margin:0;">برای مشاهده پیام وارد پروفایل شوید.</p></div><button class="btn btn-primary btn-sm" onclick="nav('profile')">مشاهده پیام</button></div></div></div></div>` : ''}
   <div class="section">
     <div class="wrap">
       <div class="section-head">
@@ -1619,17 +1622,21 @@ function viewProfile(){
         ${isMember ? `<div class="card"><div class="card-icon">🏅</div><h3>رتبه</h3><p>${esc(normalizeRank(memberRecord.rank))}</p></div>` : ''}
       </div>
 
-      ${isMember && STATE.penalties.length ? `<div class="card" style="margin-bottom:22px;border:2px solid rgba(255,55,85,.72);box-shadow:0 0 0 1px rgba(255,55,85,.12),0 16px 55px rgba(255,40,70,.14);background:linear-gradient(135deg,rgba(255,55,85,.14),rgba(13,19,34,.92));">
+      ${isMember && STATE.penalties.some(x=>!x.paid) ? `<div class="card" style="margin-bottom:22px;border:2px solid rgba(255,55,85,.72);box-shadow:0 0 0 1px rgba(255,55,85,.12),0 16px 55px rgba(255,40,70,.14);background:linear-gradient(135deg,rgba(255,55,85,.14),rgba(13,19,34,.92));">
         <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
           <div><div style="display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#5a1221;color:#ffb5c0;font-weight:900;font-size:12px;">🚨 هشدار جریمه</div><h3 style="margin:10px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">یک جریمه برای حساب شما ثبت شده است. لطفاً اطلاعات پرداخت را بررسی کنید.</p></div>
           <span class="badge badge-pending">${STATE.penalties.filter(x=>!x.paid).length} پرداخت‌نشده</span>
         </div>
-        <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.map(p=>`<div style="padding:15px;border-radius:14px;border:1px solid rgba(255,90,110,.22);background:rgba(5,10,22,.62);">
+        <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.filter(p=>!p.paid).map(p=>`<div style="padding:15px;border-radius:14px;border:1px solid rgba(255,90,110,.22);background:rgba(5,10,22,.62);">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>${esc(p.reason)}</strong><span>${esc(p.amount)} تومان</span></div>
+          <div style="margin-top:8px;color:#ffb8c2;font-size:12px;">ثبت‌شده توسط ${esc(p.issuedBy||"owner")}</div>
           <div style="margin-top:12px;padding:12px;border-radius:12px;background:rgba(255,55,85,.08);border:1px solid rgba(255,55,85,.18);white-space:pre-line;color:#ffc3cc;line-height:1.9;">${esc(p.paymentNotice||"اطلاعات پرداخت جریمه توسط مدیریت اعلام نشده است.")}</div>
-          ${p.paid ? `<span class="badge badge-success" style="margin-top:10px;">✓ پرداخت شد</span>` : `<button class="btn btn-primary btn-sm" style="margin-top:10px;" onclick="markPenaltyPaid('${esc(p.id)}')">پرداخت شد</button>`}
+          ${p.paymentStatus==='pending' ? `<span class="badge badge-pending" style="margin-top:10px;display:inline-block;">⏳ در انتظار تأیید مدیریت</span>` : `<button class="btn btn-primary btn-sm" style="margin-top:10px;" onclick="markPenaltyPaid('${esc(p.id)}')">پرداخت شد</button>`}
         </div>`).join('')}</div>
+        ${STATE.penalties.some(p=>p.paid) ? `<div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);"><h4 style="margin:0 0 10px;">💳 پرداخت‌شده‌ها</h4><div style="display:grid;gap:8px;">${STATE.penalties.filter(p=>p.paid).map(p=>`<div style="padding:10px 12px;border-radius:12px;background:rgba(49,226,160,.06);border:1px solid rgba(49,226,160,.16);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><span>${esc(p.reason)} — ${esc(p.amount)} تومان</span><span class="badge badge-success">✓ پرداخت شد</span></div>`).join('')}</div></div>` : ''}
       </div>` : ''}
+
+      ${isMember && STATE.messages.length ? `<div class="card" style="margin-bottom:22px;border:1px solid rgba(49,94,255,.32);background:linear-gradient(135deg,rgba(49,94,255,.10),rgba(13,19,34,.92));"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;"><div><div class="section-eyebrow">MANAGEMENT MESSAGE</div><h3 style="margin:4px 0;">💬 پیام‌های مدیریت</h3><p class="panel-sub" style="margin:0;">پیام‌های مستقیم مدیریت برای شما.</p></div><span class="badge badge-pending">${STATE.messages.length} پیام</span></div><div style="display:grid;gap:10px;margin-top:14px;">${STATE.messages.map(m=>`<div style="padding:13px;border-radius:13px;background:rgba(5,10,22,.62);border:1px solid rgba(96,140,255,.16);"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>👑 ${esc(m.sender==='owner'?'Owner':'مدیریت')}</strong><small class="panel-sub">${fmtDate(m.createdAt)}</small></div><div style="margin-top:9px;white-space:pre-line;line-height:1.9;">${esc(m.body)}</div></div>`).join('')}</div></div>` : ''}
 
       <div class="section-head">
   <div>

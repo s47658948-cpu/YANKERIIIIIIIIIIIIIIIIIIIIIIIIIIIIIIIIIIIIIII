@@ -27,6 +27,7 @@ input,select{width:100%;padding:11px;margin-top:7px;border:1px solid #2b3d5e;bac
       <button class="admin-nav active" data-section="dashboard">⌂ <span>نمای کلی</span></button>
       <button class="admin-nav" data-section="requests">📥 <span>درخواست‌های عضویت</span></button>
       <button class="admin-nav" data-section="members">👥 <span>اعضای رسمی</span></button>
+      <button class="admin-nav" data-section="messages">💬 <span>پیام به اعضا</span></button>
       <button class="admin-nav" data-section="community">◈ <span>اطلاعیه‌ها</span></button>
       <button class="admin-nav" data-section="support">✦ <span>تیکت اعضا</span><i id="ticketNavBadge">0</i></button><button class="admin-nav" data-section="cafeSupport">☕ <span>تیکت کافه</span><i id="cafeTicketNavBadge">0</i></button><button class="admin-nav" data-section="penalties">⚠️ <span>جریمه‌ها</span><i id="penaltyNavBadge">0</i></button>
       <div class="admin-sidebar-spacer"></div>
@@ -43,6 +44,11 @@ input,select{width:100%;padding:11px;margin-top:7px;border:1px solid #2b3d5e;bac
           <button class="quick-card" data-jump="community"><strong>اطلاعیه‌ها</strong><span>انتشار و مدیریت اطلاعیه‌های جدید</span><b>→</b></button>
           <button class="quick-card" data-jump="support"><strong>مرکز تیکت</strong><span>پاسخ‌گویی و ارسال پیام مستقیم</span><b>→</b></button>
         </div>
+      </section>
+      <section class="admin-section" data-section-panel="messages">
+        <div class="section-title-row"><div><div class="eyebrow">MEMBER MESSAGES</div><h2>💬 ارسال پیام به عضو</h2><p>پیام مستقیماً داخل پنل و پروفایل همان عضو نمایش داده می‌شود و تیکت جدیدی ایجاد نمی‌کند.</p></div></div>
+        <div class="support-compose admin-card"><div class="card-head"><div><h3>پیام جدید</h3><span>پیام از طرف مدیریت ارسال می‌شود.</span></div><span class="compose-mark">💬</span></div><div class="admin-ticket-form"><label>عضو<select id="messageMember"></select></label><label class="full">متن پیام<textarea id="memberMessageBody" maxlength="5000" placeholder="متن پیام برای عضو..."></textarea></label><button id="sendMemberMessage" type="button" class="btn primary">ارسال پیام</button></div></div>
+        <div class="admin-card"><div class="card-head"><div><h3>راهنما</h3><span>پیام‌ها داخل تیکت ارسال نمی‌شوند.</span></div></div><div class="notice">📩 عضو بعد از ورود یا بروزرسانی پروفایل، پیام را در بخش «پیام‌های مدیریت» می‌بیند.</div></div>
       </section>
       <section class="admin-section" data-section-panel="requests">
         <div class="section-title-row"><div><div class="eyebrow">MEMBERSHIP REQUESTS</div><h2>درخواست‌های عضویت</h2><p>بررسی سریع، بدون شلوغی.</p></div></div>
@@ -174,6 +180,8 @@ async function load(){
 
     $("ticketMember").innerHTML=(m.members||[]).map(x=>'<option value="'+esc(x.username)+'">'+esc(x.name)+' — @'+esc(x.username)+'</option>').join('') || '<option value="">عضوی وجود ندارد</option>';
     $("sendMemberTicket").disabled=!(m.members||[]).length;
+    if($("messageMember")) $("messageMember").innerHTML=(m.members||[]).map(x=>'<option value="'+esc(x.username)+'">'+esc(x.name)+' — @'+esc(x.username)+'</option>').join('') || '<option value="">عضوی وجود ندارد</option>';
+    if($("sendMemberMessage")) $("sendMemberMessage").disabled=!(m.members||[]).length;
 
     $("announcements").innerHTML=(a.announcements||[]).length ? '<table><thead><tr><th>عنوان</th><th>متن</th><th>زمان</th><th>عملیات</th></tr></thead><tbody>'+(a.announcements||[]).map(x=>'<tr><td>'+esc(x.title)+'</td><td>'+esc(x.body)+'</td><td>'+esc(new Date(x.date).toLocaleString("fa-IR"))+'</td><td><button class="btn danger ann-del" data-id="'+esc(x.id)+'">حذف</button></td></tr>').join('')+'</tbody></table>' : '<div class="notice">اطلاعیه‌ای وجود ندارد.</div>';
     document.querySelectorAll(".ann-del").forEach(b=>b.onclick=()=>deleteAnnouncement(b.dataset.id));
@@ -184,7 +192,7 @@ async function load(){
      $("cafeTickets").innerHTML=cafeTickets.length?cafeTickets.map(renderTicket).join(''):'<div class="notice">تیکت کافه‌ای وجود ندارد.</div>';
      if($("penaltyMember")) $("penaltyMember").innerHTML=(m.members||[]).map(x=>`<option value="${esc(x.username)}">${esc(x.name)} — @${esc(x.username)}</option>`).join('')||'<option value="">عضوی وجود ندارد</option>';
      const penalties=p?.penalties||[];
-     $("penalties").innerHTML=penalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>عملیات</th></tr></thead><tbody>${penalties.map(x=>`<tr><td>${esc(x.name)} · @${esc(x.username)}</td><td>${esc(x.reason)}</td><td>${esc(x.amount)}</td><td>${esc(x.issuedBy)}</td><td><button class="btn danger penalty-delete" data-id="${esc(x.id)}">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="notice">جریمه‌ای ثبت نشده است.</div>';
+     $("penalties").innerHTML=penalties.length?`<table><thead><tr><th>عضو</th><th>دلیل</th><th>مبلغ</th><th>ثبت‌کننده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>${penalties.map(x=>`<tr><td>${esc(x.name)} · @${esc(x.username)}</td><td>${esc(x.reason)}</td><td>${esc(x.amount)}</td><td>${esc(x.issuedBy)}</td><td>${x.paid?'<span class="badge answered">✓ پرداخت شد</span>':x.paymentStatus==='pending'?'<span class="badge pending">⏳ در انتظار تأیید</span>':'<span class="badge pending">پرداخت نشده</span>'}</td><td>${!x.paid&&x.paymentStatus==='pending'?`<button class="btn success penalty-approve" data-id="${esc(x.id)}">✓ تأیید پرداخت</button> `:''}<button class="btn danger penalty-delete" data-id="${esc(x.id)}">حذف</button></td></tr>`).join('')}</tbody></table>`:'<div class="notice">جریمه‌ای ثبت نشده است.</div>';
      if($("cafeTicketNavBadge")) $("cafeTicketNavBadge").textContent=cafeTickets.filter(x=>x.status!=="closed").length;
      if($("penaltyNavBadge")) $("penaltyNavBadge").textContent=penalties.length;
      if($("openTicketCount")) $("openTicketCount").textContent=openTickets.length;
@@ -269,6 +277,16 @@ async function replyTicket(id){ const message=prompt("پاسخ مدیریت:"); 
 async function closeTicket(id){ try{await api("ticket-close","POST",{id});await load();}catch(e){alert(e.message);} }
 async function deleteTicket(id){ if(!confirm("این تیکت و تمام پیام‌های آن برای همیشه حذف شود؟"))return; try{await api("ticket-delete","POST",{id});await load();}catch(e){alert(e.message);} }
 
+async function sendMemberMessage(){
+  const username=$("messageMember").value;
+  const message=$("memberMessageBody").value.trim();
+  if(!username||!message){ alert("عضو و متن پیام را کامل کنید."); return; }
+  const btn=$("sendMemberMessage"); btn.disabled=true; btn.textContent="در حال ارسال...";
+  try{ await api("member-message-create","POST",{username,message}); $("memberMessageBody").value=""; alert("پیام با موفقیت برای عضو ارسال شد."); await load(); }
+  catch(e){ alert(e.message); }
+  finally{ btn.disabled=false; btn.textContent="ارسال پیام"; }
+}
+
 async function sendMemberTicket(){
   const username=$("ticketMember").value;
   const subject=$("ticketSubject").value.trim();
@@ -287,7 +305,7 @@ function logout(){
   $("loginMsg").innerHTML="";
 }
 
-document.addEventListener("click",async function(e){const b=e.target.closest(".penalty-delete");if(b){try{await api("penalty-delete","POST",{id:b.dataset.id});await load()}catch(err){alert(err.message)}}});
+document.addEventListener("click",async function(e){const a=e.target.closest(".penalty-approve");if(a){if(!confirm("پرداخت این جریمه تأیید شود؟"))return;try{await api("penalty-payment-approve","POST",{id:a.dataset.id});await load()}catch(err){alert(err.message)}return;} const b=e.target.closest(".penalty-delete");if(b){try{await api("penalty-delete","POST",{id:b.dataset.id});await load()}catch(err){alert(err.message)}}});
 document.addEventListener("DOMContentLoaded",function(){
   $("loginForm").addEventListener("submit",login);
   $("logoutBtn")?.addEventListener("click",logout);
@@ -295,7 +313,7 @@ document.addEventListener("DOMContentLoaded",function(){
   $("refreshTickets")?.addEventListener("click",load);
   $("newAnnouncement")?.addEventListener("click",()=>$("announcementForm").classList.toggle("hidden"));
   $("saveAnnouncement")?.addEventListener("click",saveAnnouncement);
-  $("sendMemberTicket")?.addEventListener("click",sendMemberTicket); $("createPenalty")?.addEventListener("click",async()=>{const username=$("penaltyMember").value,reason=$("penaltyReason").value.trim(),amount=Number($("penaltyAmount").value)||0;if(!username||!reason)return alert("عضو و دلیل جریمه را کامل کنید.");try{await api("penalty-create","POST",{username,reason,amount});$("penaltyReason").value="";$("penaltyAmount").value="";await load()}catch(e){alert(e.message)}});
+  $("sendMemberTicket")?.addEventListener("click",sendMemberTicket); $("sendMemberMessage")?.addEventListener("click",sendMemberMessage); $("createPenalty")?.addEventListener("click",async()=>{const username=$("penaltyMember").value,reason=$("penaltyReason").value.trim(),amount=Number($("penaltyAmount").value)||0;if(!username||!reason)return alert("عضو و دلیل جریمه را کامل کنید.");try{await api("penalty-create","POST",{username,reason,amount});$("penaltyReason").value="";$("penaltyAmount").value="";await load()}catch(e){alert(e.message)}});
   document.querySelectorAll(".ticket-filter-btn").forEach(b=>b.addEventListener("click",()=>{ticketFilter=b.dataset.ticketFilter;load();}));
 
   if(token) load();
