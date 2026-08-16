@@ -1608,16 +1608,15 @@ function viewProfile(){
         ${isMember ? `<div class="card"><div class="card-icon">🏅</div><h3>رتبه</h3><p>${esc(normalizeRank(memberRecord.rank))}</p></div>` : ''}
       </div>
 
-      ${isMember && STATE.penalties.length ? `<div class="card" style="margin-bottom:22px;border:1px solid rgba(255,96,127,.45);background:linear-gradient(135deg,rgba(255,96,127,.10),rgba(13,19,34,.88));">
+      ${isMember && STATE.penalties.length ? `<div class="card" style="margin-bottom:22px;border:2px solid rgba(255,55,85,.72);box-shadow:0 0 0 1px rgba(255,55,85,.12),0 16px 55px rgba(255,40,70,.14);background:linear-gradient(135deg,rgba(255,55,85,.14),rgba(13,19,34,.92));">
         <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
-          <div><div class="section-eyebrow" style="color:#ff7890;">⚠️ هشدار جریمه</div><h3 style="margin:4px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">برای هر جریمه فقط وضعیت پرداخت را تأیید کنید.</p></div>
+          <div><div style="display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#5a1221;color:#ffb5c0;font-weight:900;font-size:12px;">🚨 هشدار جریمه</div><h3 style="margin:10px 0 6px;">جریمه‌های شما</h3><p class="panel-sub" style="margin:0;">یک جریمه برای حساب شما ثبت شده است. لطفاً اطلاعات پرداخت را بررسی کنید.</p></div>
           <span class="badge badge-pending">${STATE.penalties.filter(x=>!x.paid).length} پرداخت‌نشده</span>
         </div>
-        <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.map(p=>`<div style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,10,22,.55);">
+        <div style="display:grid;gap:12px;margin-top:16px;">${STATE.penalties.map(p=>`<div style="padding:15px;border-radius:14px;border:1px solid rgba(255,90,110,.22);background:rgba(5,10,22,.62);">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>${esc(p.reason)}</strong><span>${esc(p.amount)} تومان</span></div>
-          <div class="panel-sub" style="margin:7px 0;">ثبت‌شده توسط ${esc(p.issuedBy||"مدیریت")}</div>
-          ${p.paymentNotice ? `<div style="margin:10px 0;padding:12px;border-radius:12px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.22);white-space:pre-line;line-height:1.9;"><strong>💳 اطلاعات پرداخت</strong><div style="margin-top:6px;">${esc(p.paymentNotice)}</div></div>` : ''}
-          ${p.paid ? `<span class="badge badge-success">✓ پرداخت شد</span>` : `<button class="btn btn-primary btn-sm" onclick="markPenaltyPaid('${esc(p.id)}')">پرداخت شد</button>`}
+          <div style="margin-top:12px;padding:12px;border-radius:12px;background:rgba(255,55,85,.08);border:1px solid rgba(255,55,85,.18);white-space:pre-line;color:#ffc3cc;line-height:1.9;">${esc(p.paymentNotice||"اطلاعات پرداخت جریمه توسط مدیریت اعلام نشده است.")}</div>
+          ${p.paid ? `<span class="badge badge-success" style="margin-top:10px;">✓ پرداخت شد</span>` : `<button class="btn btn-primary btn-sm" style="margin-top:10px;" onclick="markPenaltyPaid('${esc(p.id)}')">پرداخت شد</button>`}
         </div>`).join('')}</div>
       </div>` : ''}
 
@@ -2189,7 +2188,7 @@ window.openEmbeddedAdmin=function(){
   var frame=document.getElementById("embeddedAdminFrame");
   if(!o || !frame) return;
   if(typeof canManageByRank==="function" && !canManageByRank()){
-    alert("فقط اعضای رنک 10 تا 14 به پنل مدیریت دسترسی دارند.");
+    alert("فقط اعضای رنک 10 تا 14 به پنل اعضا دسترسی دارند.");
     return;
   }
   frame.src="/member-admin.html?v="+Date.now();

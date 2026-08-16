@@ -424,7 +424,7 @@ export async function handler(event) {
       return reply(200,{ok:true,penalty:out?.[0]||{...rows[0],paid:true,paid_at:paidAt}});
     }
 
-    if (!checkToken(event)) return reply(401, { ok: false, error: "دسترسی مدیریت لازم است." });
+    if (!checkToken(event)) return reply(401, { ok: false, error: "دسترسی پنل اعضا لازم است." });
 
     // Rank 10+ members get a separate, passwordless admin panel.
     // Their scope is intentionally limited to tickets, membership approval/deletion,
@@ -579,7 +579,7 @@ export async function handler(event) {
       const actor=getAdminActor(event);
       if(!actor || (!actor.isOwner && Number(actor.rank)!==10 && Number(actor.rank)<12)) return reply(403,{ok:false,error:"پنل جریمه فقط برای رنک 10 و 12 به بالا است."});
       const rows=await db("penalties?select=*&order=created_at.desc");
-      return reply(200,{ok:true,penalties:(rows||[]).map(p=>({id:p.id,username:p.username||"",name:p.name||"",reason:p.reason||"",amount:Number(p.amount||0),createdAt:Number(p.created_at||0),issuedBy:p.issued_by||"",paid:!!p.paid,paidAt:p.paid_at?Number(p.paid_at):null}))});
+      return reply(200,{ok:true,penalties:(rows||[]).map(p=>({id:p.id,username:p.username||"",name:p.name||"",reason:p.reason||"",amount:Number(p.amount||0),createdAt:Number(p.created_at||0),issuedBy:p.issued_by||"",paymentNotice:p.payment_notice||`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.`,paid:!!p.paid,paidAt:p.paid_at?Number(p.paid_at):null}))});
     }
     if (event.httpMethod === "POST" && action === "penalty-create") {
       const actor=getAdminActor(event);
@@ -589,16 +589,12 @@ export async function handler(event) {
       const rows=await db(`members?username=eq.${encodeURIComponent(username)}&limit=1`);
       if(!rows?.length) return reply(404,{ok:false,error:"عضو تأییدشده پیدا نشد."});
       const now=Date.now();
-      const row={id:crypto.randomUUID(),username,name:rows[0].name||username,reason,amount,issued_by:actor.username||ADMIN_USER,created_at:now,paid:false,paid_at:null};
-      const out=await db("penalties",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify(row)});
-
-      // Automatically create a dedicated penalty ticket for the member with the required payment notice.
-      const ticketId=crypto.randomUUID();
       const paymentNotice=`شماره کارت جهت واریز جریمه .\n\nAgha Esi\n287 496 \n\nبعد واریز تیک پرداخت رو بزنید و عکس رسید رو برایه رکسار یا آقا اسی بفرستید پیام بدید بگید واریز کردید.`;
-      const ticketMessage=`${paymentNotice}\n\nدلیل جریمه: ${reason}\nمبلغ جریمه: ${amount}`;
-      await db("tickets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:ticketId,username,name:rows[0].name||username,subject:"جریمه",category:"member",status:"open",created_at:now,updated_at:now})});
-      await db("ticket_messages",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),ticket_id:ticketId,sender:"admin",sender_name:actor.username||ADMIN_USER,body:ticketMessage,sender_role:"admin",sender_username:actor.username||ADMIN_USER,message:ticketMessage,created_at:now})});
-      return reply(201,{ok:true,penalty:out?.[0]||row,ticketId});
+      const row={id:crypto.randomUUID(),username,name:rows[0].name||username,reason,amount,issued_by:actor.username||ADMIN_USER,created_at:now,paid:false,paid_at:null,payment_notice:paymentNotice};
+      const out=await db("penalties",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify(row)});
+      // Penalties are shown directly in the member's profile penalty notice area.
+      // Do NOT create a support ticket for a penalty.
+      return reply(201,{ok:true,penalty:out?.[0]||row});
     }
     if (event.httpMethod === "POST" && action === "penalty-delete") {
       const actor=getAdminActor(event);
